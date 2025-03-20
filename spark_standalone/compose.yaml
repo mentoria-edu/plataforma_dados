@@ -1,0 +1,30 @@
+services:
+  spark-master:
+    build: .
+    mem_limit: 1000m
+    cpus: "1.5"
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+    ports:
+      - "8080:8080"   # UI do Spark Master
+      - "7077:7077"   # Porta de comunicação do Master com os Workers
+    networks:
+      - spark-net
+
+  spark-worker:
+    build: .
+    mem_limit: 1000m
+    cpus: "1.5"
+    environment:
+      - SPARK_MODE=worker
+    ports:
+      - "8081:8081"   # UI do Spark Worker
+    networks:
+      - spark-net
+    depends_on:
+      - spark-master
+
+networks:
+  spark-net:
+    driver: bridge
