@@ -9,6 +9,11 @@ services:
     ports:
       - "8080:8080"   # UI do Spark Master
       - "7077:7077"   # Porta de comunicação do Master com os Workers
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
     networks:
       - spark-net
 
@@ -20,6 +25,11 @@ services:
       - SPARK_MODE=worker
     ports:
       - "8081:8081"   # UI do Spark Worker
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8081" ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
     networks:
       - spark-net
     depends_on:
