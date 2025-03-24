@@ -1,40 +1,44 @@
 services:
   spark-master:
     build: .
-    mem_limit: 1000m
-    cpus: "1.5"
     container_name: spark-master
     environment:
       - SPARK_MODE=master
+    volumes:
+      - ./spark-logs:/opt/spark/spark-events
     ports:
-      - "8080:8080"   # UI do Spark Master
+      - "5186:5186"   # UI do Spark Master
       - "7077:7077"   # Porta de comunicação do Master com os Workers
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
-      interval: 5s
-      timeout: 3s
-      retries: 3
+      - "4040:4040"   # Porta de Monitoramento
     networks:
       - spark-net
 
   spark-worker:
     build: .
-    mem_limit: 1000m
-    cpus: "1.5"
     environment:
       - SPARK_MODE=worker
+    volumes:
+      - ./spark-logs:/opt/spark/spark-events
     ports:
-      - "8081:8081"   # UI do Spark Worker
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8081" ]
-      interval: 5s
-      timeout: 3s
-      retries: 3
+      - "5187:5187"   # UI do Spark Worker
+      - "4041:4040"
     networks:
       - spark-net
     depends_on:
       - spark-master
 
+  spark-history:
+    build: .
+    environment:
+      - SPARK_MODE=history
+    volumes:
+      - ./spark-logs:/opt/spark/spark-events
+    ports:
+      - '18080:18080'  
+    networks:
+      - spark-net
+    depends_on:
+      - spark-master
 networks:
   spark-net:
     driver: bridge

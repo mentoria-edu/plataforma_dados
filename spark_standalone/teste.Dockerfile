@@ -13,11 +13,12 @@ RUN apt update -y && \
     libnss3 \ 
     net-tools 
 
+
 ENV SPARK_HOME=${SPARK_HOME:-"/opt/spark"}
-# Opcional. Preparando o território para o hadoop Yarn
-ENV HADOOP_HOME=${HADOOP_HOME:-"/opt/hadoop"} 
+ENV HADOOP_HOME=${HADOOP_HOME:-"/opt/hadoop"}
 
 RUN mkdir -p ${HADOOP_HOME} && mkdir -p ${SPARK_HOME}
+
 
 RUN wget https://dlcdn.apache.org/spark/spark-3.5.5/spark-3.5.5-bin-hadoop3.tgz
 
@@ -36,4 +37,4 @@ COPY spark-defaults.conf /opt/spark/conf/spark-defaults.conf
 
 RUN mkdir -p /opt/spark/spark-events
 
-ENTRYPOINT [ "bash", "/opt/spark/conf/entrypoint.sh" ]
+# ENTRYPOINT [ "bash", "/opt/spark/conf/entrypoint.sh" ]
