@@ -1,59 +1,82 @@
 # Mentoria-edu - Plataforma de dados
 
-## Descrição
+## Estrutura
 
-Este repositório contém o código e os recursos necessários para desenvolvimento e aprimoramento de uma plataforma de dados. 
+```
+plataforma_dados/
+├── README.md
 
-## Como realizar um Push para o repósitorio
-
-###  1. Criando uma Nova Branch
-
-```bash
-# Crie uma nova branch para sua funcionalidade
-git checkout -b feature/nova-funcionalidade
 ```
 
----
+## Guia Commit - Git flow
 
-###  2. Fazendo Alterações e Commitando
+### Estrutura de Branches do Git Flow
 
-Após modificar os arquivos, siga estes passos:
+- `main`: Branch de produção.
+- `dev`: Branch de desenvolvimento integrado.
+- `feat/*`: Branches para novas funcionalidades.
+- `hotfeat/*`: Branches para aplicar features críticas.
+- `hotfix/*`: Branches para correções críticas em produção.
 
-```bash
-# Adicionar os arquivos modificados
-git add .
-
-# Criar um commit descritivo
-git commit -m "feat: adiciona nova funcionalidade X"
-```
-
----
-
-###  3. Enviando a Branch para o Repositório
-
-Agora, faça o **push** da branch remota:
+#### Feature Branch:
 
 ```bash
-# Enviar a branch para o repositório
-git push origin feature/nova-funcionalidade
+git checkout dev
+git pull origin dev
+git checkout -b feat/nome-da-feature
 ```
 
-Se for a **primeira vez** enviando essa branch, use:
+#### Commits na Feature:
 
 ```bash
-git push --set-upstream origin feature/nova-funcionalidade
+git add "seu_arquivo_atualizado.ext"
+git commit -m "feat: add user login button"
+git push origin feat/nome-da-feature
 ```
 
----
+#### Finalizar uma Feature:
 
-### 4. Criando um Pull Request
+**Pull Request (PR)**:
 
-1. Acesse o repositório no GitHub/GitLab.
+1. Acesse o repositório no GitHub.
 2. Vá até a aba **Pull Requests**.
 3. Clique em **New Pull Request**.
-4. Selecione `feature/nova-funcionalidade` como origem e `main` como destino.
-5. Adicione uma descrição e envie para revisão.
+4. Selecione `feat/nome-da-feature` como origem e `dev` como destino.
+5. Adicione a descrição com o mesmo nome da branch e envie para revisão.
+---
+
+### Hotfix/Hotfeat Branch
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b hotfix/nome-do-hotfix 
+```
+#### Commits Hotfix/Hotfeat:
+
+```bash
+git add "seu_arquivo_atualizado.ext"
+git commit -m "hotfix: prevent null user data crash"
+git push origin hotfix/nome-do-hotfix
+```
+
+#### Finalizar Hotfix/Hotfeat:
+
+1. Acesse o repositório no GitHub.
+2. Vá até a aba **Pull Requests**.
+3. Clique em **New Pull Request**.
+4. Crie um PR de `hotfix/nome-do-hotfix` para `main`
+5. Adicione a descrição com o mesmo nome da branch e envie para revisão.
+6. Faça um PR para atualizar a branch dev
 
 ---
 
+### Merge dev->main:
+
+As features ficarão na branch dev para avaliação por uma semana, serão mescladas nos dias de review (segunda e quinta-feira), caso sejam aprovadas. ❗❗❗
+
+---
+### ❓ Dúvidas ou Ajuda?
+
+[Documentação gitflow Atlassiam](https://www.atlassian.com/br/git/tutorials/comparing-workflows/gitflow-workflow)
 
