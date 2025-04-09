@@ -27,7 +27,7 @@ jobs:
           
           echo "PR_AUTHOR_MENTION=$PR_AUTHOR_MENTION" >> $GITHUB_ENV
 
-          PR_REVIEWERS_RAW="${{ join(github.event.pull_request.requested_reviewers.*.login, ' ') }}"
+          PR_REVIEWERS_RAW="${{ join(github.event.pull_request.requested_reviewers.*.login, ' ') }} ${{ join(github.event.pull_request.requested_teams.*.name, ' ') }}"
                 
           PR_REVIEWERS_MENTION=""
 
