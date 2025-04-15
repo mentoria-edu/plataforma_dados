@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Menção usuario discord
+      - name: function discord notification
         id: map_users
         run: |        
           declare -A user_map
