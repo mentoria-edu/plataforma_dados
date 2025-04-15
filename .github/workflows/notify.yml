@@ -1,0 +1,93 @@
+name: notify
+
+on:
+  pull_request:
+    types: [opened]  
+    
+jobs:
+  notify:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: function discord notification
+        id: map_users
+        run: |        
+          declare -A user_map
+          while IFS="=" read -r key value; do
+            [[ -n "$key" && -n "$value" ]] && user_map["$key"]="$value"
+          done < <(echo "${{ vars.USER_MAP }}" | tr -d '\r')
+          
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          
+          if [[ -n "${user_map[$PR_AUTHOR]}" ]]; then
+            PR_AUTHOR_MENTION="${user_map[$PR_AUTHOR]}"
+          else
+            PR_AUTHOR_MENTION="$PR_AUTHOR"
+          fi
+          
+          echo "PR_AUTHOR_MENTION=$PR_AUTHOR_MENTION" >> $GITHUB_ENV
+
+          PR_REVIEWERS_RAW="${{ join(github.event.pull_request.requested_reviewers.*.login, ' ') }} ${{ join(github.event.pull_request.requested_teams.*.name, ' ') }}"
+                
+          PR_REVIEWERS_MENTION=""
+
+          for reviewer in $PR_REVIEWERS_RAW; do
+            if [[ -n "${user_map[$reviewer]}" ]]; then
+              PR_REVIEWERS_MENTION+="${user_map[$reviewer]}, "
+            else
+              PR_REVIEWERS_MENTION+="$reviewer, "
+            fi
+          done        
+       
+          PR_REVIEWERS_MENTION="${PR_REVIEWERS_MENTION%, }"
+        
+          echo "PR_REVIEWERS_MENTION=$PR_REVIEWERS_MENTION" >> $GITHUB_ENV
+
+      - name: Set environment variables
+        run: |
+          echo "PR_LINK=${{ github.event.pull_request.html_url }}" >> $GITHUB_ENV
+          echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+          echo "REPO_LINK=${{ github.event.repository.html_url }}" >> $GITHUB_ENV
+          echo "PR_TITLE=${{ github.event.pull_request.title }}" >> $GITHUB_ENV
+          echo "PR_BODY=${{ github.event.pull_request.body }}" >> $GITHUB_ENV
+          echo "REPO=${{ github.repository }}" >> $GITHUB_ENV
+          echo "PR_REVIEWERS=${{ join(github.event.pull_request.requested_reviewers.*.login, ', ') }}" >> $GITHUB_ENV
+
+      - name: Send message for pull request opened        
+        run: |
+          curl -H "Content-Type: application/json" -X POST -d '{
+            "content": "📢 **Novo MR aberto!!**\n\n👤 **Autor**:${{ env.PR_AUTHOR_MENTION }}\n🔍 **Revisores**:${{ env.PR_REVIEWERS_MENTION }}",
+            "allowed_mentions": { "parse": ["users"] },
+            "embeds": [
+              {
+                "title": "Informações do MR:",
+                "color": 2126948,
+                "fields": [
+                  {
+                    "name": "🔗 Link do MR",
+                    "value": "[${{ env.PR_NUMBER }}](${{ env.PR_LINK }})",
+                    "inline": false
+                  },
+                  {
+                    "name": "📂 Repositório",
+                    "value": "[${{ env.REPO }}](${{ env.REPO_LINK }})",
+                    "inline": false
+                  },
+                  {
+                    "name": "📝 Título",
+                    "value": "${{ env.PR_TITLE }}",
+                    "inline": false
+                  },                
+                  {
+                    "name": "💬 Comentários",
+                    "value": "${{ env.PR_BODY }}",
+                    "inline": false
+                  }                 
+                ],
+                "footer": {
+                  "text": "Notificação automática do GitHub 🚀",
+                  "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+                }
+              }
+            ]
+          }' ${{ secrets.DISCORD_WEBHOOK }}
