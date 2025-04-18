@@ -18,21 +18,9 @@
         <value>1234</value>
     </property>
     <property>
-        <name>hive.server2.thrift.bind.host</name>
-        <value>masternode</value>        
-    </property>
-    <property>
-        <name>hive.server2.thrift.port</name>
-        <value>10000</value>      
-    </property>
-    <property>
-        <name>hive.server2.authentication</name>
-        <value>none</value>       
-    </property>
-    <property>
-        <name>hive.server2.enable.doAs</name>
-        <value>false</value>      
-    </property>
+        <name>hive.metastore.uris</name>
+        <value>thrift://masternode:9083</value>        
+    </property>   
     <property>
         <name>hive.metastore.warehouse.dir</name>
         <value>hdfs://hdfs:9000/warehouse</value>

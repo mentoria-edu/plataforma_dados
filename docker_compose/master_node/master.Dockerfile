@@ -50,7 +50,8 @@ RUN ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa && \
     cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys && \
     chmod 0600 ~/.ssh/authorized_keys
 
-RUN mkdir -p /opt/hadoop/dfs/name 
+RUN mkdir -p /opt/hadoop/dfs/name && \
+    mkdir -p /tmp/logs
   
 COPY core-site.xml $HADOOP_HOME/etc/hadoop/core-site.xml
 COPY hdfs-site.xml $HADOOP_HOME/etc/hadoop/hdfs-site.xml
@@ -60,8 +61,6 @@ COPY hive-site.xml $HIVE_HOME/conf
 RUN hdfs namenode -format  
 
 #RUN schematool -dbType postgres -initSchema
-
-EXPOSE 9870 1000 8088
 
 COPY entrypoint.sh /etc/entrypoint.sh
 

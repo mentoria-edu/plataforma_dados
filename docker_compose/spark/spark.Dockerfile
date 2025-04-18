@@ -31,9 +31,18 @@ RUN mkdir -p ${SPARK_HOME} && \
     wget -q ${LINK_DOWNLOAD_SPARK} -O ${SPARK_HOME}/${SPARK_FOLDER_NAME} && \
     tar xzf ${SPARK_HOME}/${SPARK_FOLDER_NAME} -C ${SPARK_HOME} --strip-components=1 && \
     rm -f ${SPARK_HOME}/${SPARK_FOLDER_NAME}
+
+RUN wget https://repo1.maven.org/maven2/org/apache/hive/hive-metastore/4.0.1/hive-metastore-4.0.1.jar && \
+    wget https://repo1.maven.org/maven2/org/apache/hive/hive-common/4.0.1/hive-common-4.0.1.jar && \
+    wget https://repo1.maven.org/maven2/org/apache/hive/hive-storage-api/4.0.1/hive-storage-api-4.0.1.jar && \
+    wget https://repo1.maven.org/maven2/org/apache/hive/hive-serde/4.0.1/hive-serde-4.0.1.jar && \
+    mv hive-metastore-4.0.1.jar ${SPARK_HOME}/jars && \
+    mv hive-common-4.0.1.jar ${SPARK_HOME}/jars && \
+    mv hive-storage-api-4.0.1.jar ${SPARK_HOME}/jars && \
+    mv hive-serde-4.0.1.jar ${SPARK_HOME}/jars
     
 COPY spark-defaults.conf ${SPARK_CONF_DIR}/spark-defaults.conf
 
-COPY ./teste.py ${SPARK_HOME}
+COPY ./hive_teste.py ${SPARK_HOME}
 
-CMD ["bash", "-c",  "${SPARK_HOME}/bin/spark-submit  --master yarn --deploy-mode cluster ${SPARK_HOME}/teste.py"]
+CMD ["bash", "-c",  "${SPARK_HOME}/bin/spark-submit  --master yarn --deploy-mode cluster ${SPARK_HOME}/hive_teste.py"]

@@ -37,7 +37,8 @@ RUN echo "export JAVA_HOME=${JAVA_HOME}" >> $HADOOP_HOME/etc/hadoop/hadoop-env.s
 
 #RUN chown -R $USER_HDFS:$USER_HDFS $HADOOP_HOME
 
-RUN mkdir -p /opt/hadoop/dfs/data     
+RUN mkdir -p /opt/hadoop/dfs/data && \
+    mkdir -p /tmp/logs
 
 RUN ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa && \
     cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys && \

@@ -20,11 +20,19 @@
 		<value>0.0.0.0:8088</value>
 	</property>
 	<property>
-		<name>yarn.scheduler.minimum-allocation-mb</name>
-		<value>256</value>
-	</property>
+	    <name>yarn.log-aggregation-enable</name>
+	    <value>true</value>
+    </property>
 	<property>
-		<name>yarn.scheduler.maximum-allocation-mb</name>
-		<value>10240</value>
-	</property>
+	    <name>yarn.nodemanager.remote-app-log-dir</name>
+	    <value>hdfs://masternode:9000/yarn_logs</value>
+    </property>	
+	<property>
+	    <name>yarn.log-aggregation.retain-seconds</name>
+	    <value>86400</value>
+    </property>
+	<property>
+	    <name>yarn.nodemanager.log-dirs</name>
+	    <value>/tmp/logs</value>
+    </property>			
 </configuration>
