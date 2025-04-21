@@ -1,20 +1,83 @@
 #!/bin/bash
+set -e
 
-set -e 
 
-#hive --metastore
+# Configuração do hostname
+# echo "127.0.0.1 masternode" >> /etc/hosts
+echo "Iniciando serviço SSH..."
+service ssh start
 
-service ssh start && hdfs --daemon start namenode && yarn --daemon start resourcemanager
+# Formatação do NameNode - CRUCIAL SE FOR A PRIMEIRA EXECUÇÃO
+if [ ! -f /opt/hadoop/dfs/name/current/VERSION ]; then
+  echo "Formatando o NameNode pela primeira vez..."
+  hdfs namenode -format
+fi
 
-until hdfs dfsadmin -safemode get | grep "Safe mode is OFF"; do
-  echo "Aguardando o HDFS sair do modo seguro..."
+# Iniciar NameNode e verificar se está rodando
+echo "Iniciando HDFS NameNode..."
+hdfs --daemon start namenode
+
+# Verificar se o processo NameNode está executando
+echo "Aguardando NameNode iniciar..."
+sleep 5
+if ! pgrep -f "proc_namenode" > /dev/null; then
+  echo "ERRO: NameNode não iniciou corretamente!"
+  # Para debug
+  echo "--- Últimas 20 linhas do log do NameNode ---"
+  tail -20 /opt/hadoop/logs/hadoop-*-namenode-*.log
+  exit 1
+fi
+
+# Verificar se o NameNode está escutando na porta 9000
+echo "Verificando porta 9000..."
+sleep 5
+if ! netstat -tlnp | grep -q ":9000"; then
+  echo "ERRO: NameNode não está escutando na porta 9000!"
+  # Para debug
+  echo "--- Status das portas ---"
+  netstat -tlnp
+  exit 1
+fi
+
+# Aguardar HDFS sair do modo seguro
+echo "Aguardando o HDFS sair do modo seguro..."
+attempt=0
+max_attempts=30
+while [ $attempt -lt $max_attempts ]; do
+  if hdfs dfsadmin -safemode get | grep -q "Safe mode is OFF"; then
+    echo "HDFS saiu do modo seguro!"
+    break
+  fi
+  attempt=$((attempt + 1))
+  echo "Tentativa $attempt/$max_attempts - HDFS ainda em modo seguro..."
+  sleep 5
+  hdfs dfsadmin -safemode leave
 done
 
-hadoop fs -mkdir -p /warehouse && \
-hadoop fs -mkdir -p /spark_events && \
-hadoop fs -mkdir -p /lakehouse  && \
-hadoop fs -mkdir -p /yarn_logs
+# Continuar com a criação de diretórios
+if [ $attempt -lt $max_attempts ]; then
+  echo "Criando diretórios no HDFS..."
+  hadoop fs -mkdir -p /warehouse 
+  hadoop fs -mkdir -p /spark_events 
+  hadoop fs -mkdir -p /lakehouse
+  hadoop fs -mkdir -p /yarn_logs
+  # hadoop fs -chmod -R 777 /warehouse /spark_events /lakehouse /yarn_logs
+  
+  # Iniciar ResourceManager
+  echo "Iniciando YARN ResourceManager..."
+  yarn --daemon start resourcemanager
 
-schematool -dbType postgres -info || schematool -dbType postgres -initSchema
+  # Inicializar Hive
+  echo "Configurando Hive Metastore..."
+  schematool -dbType postgres -info || schematool -dbType postgres -initSchema
+  
+  # Iniciar serviço Hive Metastore
+  echo "Iniciando Hive Metastore..."
+  nohup hive --service metastore > /opt/hadoop/logs/metastore.log 2>&1 &
+else
+  echo "ERRO: HDFS não saiu do modo seguro após várias tentativas!"
+  exit 1
+fi
 
+echo "Ambiente Hadoop inicializado com sucesso!"
 tail -f /dev/null
