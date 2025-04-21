@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:17.4
+    environment:
+      - POSTGRES_PASSWORD=1234
+    volumes:
+      - ./data/postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      hadoop_network:
+        ipv4_address: 172.20.0.2
+
+  master_node:
+    build: ./master_node/.
+    container_name: masternode
+    hostname: masternode
+    ports:
+      - "8020:8020"     # NameNode RPC
+      - "8030:8030"     # ResourceManager Scheduler RPC
+      - "8031:8031"     # ResourceManager ResourceTracker
+      - "8032:8032"
+      - "8033:8033"     # ResourceManager Admin
+      - "8042:8042"     # NodeManager Web UI
+      - "8088:8088"     # ResourceManager Web UI
+      - "9000:9000"     # HDFS
+      - "9083:9083"     # Hive Metastore Thrift
+      - "9866:9866"     # DataNode transferência de blocos
+      - "9868:9868"     # Secondary NameNode Web UI
+      - "9870:9870"     # NameNode Web UI
+      - "10000:10000"   # HiveServer2 JDBC/ODBC'
+    # volumes:
+    #   - ./data/hdfs_data:/opt/hadoop/dfs/name
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "netstat -tulpn | grep -q ':9000' && netstat -tulpn | grep -q ':8088' && netstat -tulpn | grep -q ':8032' && pgrep -f metastore"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    extra_hosts:
+      - "masternode:172.20.0.3"
+    networks:
+      hadoop_network:
+        ipv4_address: 172.20.0.3
+
+  worker_node:
+    build: ./worker_node/.
+    ports:
+      - "9864:9864"     # DataNode Web UI
+    healthcheck:
+      test: ["CMD", "bash", "-c", "netstat -tulpn | grep -q ':9864'"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      master_node:
+        condition: service_healthy
+    extra_hosts:
+      - "masternode:172.20.0.3"
+    networks:
+      hadoop_network:
+        ipv4_address: 172.20.0.4
+
+  client_node:
+    build: ./spark/.
+    ports:
+      - "8080:8080"
+    depends_on:
+      master_node:
+        condition: service_healthy
+      worker_node:
+        condition: service_healthy
+    extra_hosts:
+      - "masternode:172.20.0.3"
+    networks:
+      hadoop_network:
+        ipv4_address: 172.20.0.5
+ 
+networks:
+  hadoop_network:
+    name: hadoop_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
