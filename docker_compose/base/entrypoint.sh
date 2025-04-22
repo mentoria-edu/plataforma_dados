@@ -11,7 +11,7 @@ if [ "$CLIENT_NODE" == "false" ]; then
   if [ "$SPECIFIC_NODE" == "master" ]; then
     
     # Formatação do NameNode - CRUCIAL SE FOR A PRIMEIRA EXECUÇÃO
-    if [ ! -f /opt/hadoop/dfs/name/current/VERSION ]; then
+    if [ ! -f $VERSION_HDFS ]; then
       echo "Formatando o NameNode pela primeira vez..."
       hdfs namenode -format
     fi
@@ -22,7 +22,7 @@ if [ "$CLIENT_NODE" == "false" ]; then
 
     # Verificar se o processo NameNode está executando
     echo "Aguardando NameNode iniciar..."
-    sleep 5
+    sleep 5 
     if ! pgrep -f "proc_namenode" > /dev/null; then
       echo "ERRO: NameNode não iniciou corretamente!"
       # Para debug
@@ -71,11 +71,14 @@ if [ "$CLIENT_NODE" == "false" ]; then
 
       # Inicializar Hive
       echo "Configurando Hive Metastore..."
-      schematool -dbType postgres -info || schematool -dbType postgres -initSchema
+      schematool -dbType postgres -info || schematool -dbType postgres -initSchemaTo 3.1.3
       
       # Iniciar serviço Hive Metastore
       echo "Iniciando Hive Metastore..."
-      nohup hive --service metastore > /opt/hadoop/logs/metastore.log 2>&1 &
+      hive --service metastore > /opt/hadoop/logs/metastore.log 2>&1 &
+      if [ ! -f "/opt/hadoop/logs/metastore.log" ]; then
+        echo  "Hive Metastore inicializado com sucesso!"
+      fi
     else
       echo "ERRO: HDFS não saiu do modo seguro após várias tentativas!"
       exit 1
@@ -97,8 +100,10 @@ if [ "$CLIENT_NODE" == "false" ]; then
 
 elif [ "$CLIENT_NODE" == "true" ]; then
     echo "Container inicializado em modo Client. \
-Todos os arquivos de configurações estão presentes, \
-mas nada é inicializado" 
+    Todos os arquivos de configurações estão presentes, \
+    mas nada é inicializado" 
+
+    ${SPARK_HOME}/bin/spark-submit  --master yarn --deploy-mode cluster ${SPARK_HOME}/hive_teste.py
 
 else
   echo "Valor inválido para CLIENT_NODE. Use 'true' ou 'false'."

@@ -1,6 +1,7 @@
 services:
   postgres:
     image: postgres:17.4
+    container_name: postgres
     environment:
       - POSTGRES_PASSWORD=1234
     volumes:
@@ -8,7 +9,7 @@ services:
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD", "bash", "-c", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -17,8 +18,12 @@ services:
       hadoop_network:
         ipv4_address: 172.20.0.2
 
+
   master_node:
-    build: ./master_node/.
+    build: ./base/.
+    environment:
+      - SPECIFIC_NODE=master
+      - CLIENT_NODE=false
     container_name: masternode
     hostname: masternode
     ports:
@@ -30,13 +35,14 @@ services:
       - "8042:8042"     # NodeManager Web UI
       - "8088:8088"     # ResourceManager Web UI
       - "9000:9000"     # HDFS
-      - "9083:9083"     # Hive Metastore Thrift
+      - "9085:9085"     # Hive Metastore Thrift
       - "9866:9866"     # DataNode transferência de blocos
       - "9868:9868"     # Secondary NameNode Web UI
       - "9870:9870"     # NameNode Web UI
       - "10000:10000"   # HiveServer2 JDBC/ODBC'
-    # volumes:
-    #   - ./data/hdfs_data:/opt/hadoop/dfs/name
+    volumes:
+      # - ./data/hdfs_data:/opt/hadoop/dfs/name
+      - ./tst:/home 
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,7 +59,11 @@ services:
         ipv4_address: 172.20.0.3
 
   worker_node:
-    build: ./worker_node/.
+    build: ./base/.
+    environment:
+      - SPECIFIC_NODE=worker
+      - CLIENT_NODE=false
+    container_name: worker_node
     ports:
       - "9864:9864"     # DataNode Web UI
     healthcheck:
@@ -72,7 +82,11 @@ services:
         ipv4_address: 172.20.0.4
 
   client_node:
-    build: ./spark/.
+    build: ./base/.
+    environment:
+      - SPECIFIC_NODE=master
+      - CLIENT_NODE=true
+    container_name: client_node
     ports:
       - "8080:8080"
     depends_on:

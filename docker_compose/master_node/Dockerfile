@@ -2,7 +2,8 @@ FROM eclipse-temurin:8-jdk-jammy
 
 ARG V_HADOOP=3.4.1
 # ARG V_HADOOP=3.3.6
-ARG V_HIVE=4.0.1
+# ARG V_HIVE=4.0.1
+ARG V_HIVE=3.1.3
 ARG V_SPARK=3.5.5
 
 ENV HADOOP_HOME=/opt/hadoop
@@ -27,10 +28,15 @@ RUN wget https://dlcdn.apache.org/hadoop/common/hadoop-${V_HADOOP}/hadoop-${V_HA
     tar -xvzf hadoop-${V_HADOOP}.tar.gz -C /opt && \
     mv /opt/hadoop-${V_HADOOP} $HADOOP_HOME
 
-RUN wget https://dlcdn.apache.org/hive/hive-${V_HIVE}/apache-hive-${V_HIVE}-bin.tar.gz && \
+# RUN wget https://dlcdn.apache.org/hive/hive-${V_HIVE}/apache-hive-${V_HIVE}-bin.tar.gz && \
+#     tar -xvzf apache-hive-${V_HIVE}-bin.tar.gz -C /opt && \
+#     mv /opt/apache-hive-${V_HIVE}-bin $HIVE_HOME   
+
+
+RUN wget https://archive.apache.org/dist/hive/hive-${V_HIVE}/apache-hive-${V_HIVE}-bin.tar.gz && \
     tar -xvzf apache-hive-${V_HIVE}-bin.tar.gz -C /opt && \
     mv /opt/apache-hive-${V_HIVE}-bin $HIVE_HOME   
-    
+
 RUN wget https://dlcdn.apache.org/spark/spark-${V_SPARK}/spark-${V_SPARK}-bin-hadoop3.tgz && \         
     tar -xvzf spark-${V_SPARK}-bin-hadoop3.tgz -C /opt && \
     mv /opt/spark-${V_SPARK}-bin-hadoop3 $SPARK_HOME

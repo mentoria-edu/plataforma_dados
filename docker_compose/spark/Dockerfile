@@ -5,13 +5,13 @@ ARG SPARK_FOLDER_NAME="${SPARK_VERSION}-bin-hadoop3.tgz"
 ARG LINK_DOWNLOAD_SPARK="https://dlcdn.apache.org/spark/${SPARK_VERSION}/${SPARK_FOLDER_NAME}"
 
 ENV SPARK_HOME="/opt/spark"
-ENV SPARK_CONF_DIR="${SPARK_HOME}/conf/"
-ENV SPARK_SBIN_DIR="${SPARK_HOME}/sbin/"
+ENV SPARK_CONF_DIR="${SPARK_HOME}/conf"
+ENV SPARK_SBIN_DIR="${SPARK_HOME}/sbin"
 ENV HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
 ENV YARN_CONF_DIR=/opt/hadoop/etc/hadoop
-ENV SPARK_BIN_DIR="${SPARK_HOME}/bin/"
-ENV SPARK_PYTHON_EXAMPLES="${SPARK_HOME}/examples/src/main/python/"
-ENV SPARK_EVENTS_DIR="${SPARK_HOME}/spark-events/"
+ENV SPARK_BIN_DIR="${SPARK_HOME}/bin"
+ENV SPARK_PYTHON_EXAMPLES="${SPARK_HOME}/examples/src/main/python"
+ENV SPARK_EVENTS_DIR="${SPARK_HOME}/spark-events"
 ENV PATH="${SPARK_HOME}:${SPARK_SBIN_DIR}:${SPARK_BIN_DIR}:${SPARK_EVENTS_DIR}:${PATH}"
 
 RUN apt update -y && \
@@ -33,17 +33,23 @@ RUN mkdir -p ${SPARK_HOME} && \
     tar xzf ${SPARK_HOME}/${SPARK_FOLDER_NAME} -C ${SPARK_HOME} --strip-components=1 && \
     rm -f ${SPARK_HOME}/${SPARK_FOLDER_NAME}
 
-RUN wget https://repo1.maven.org/maven2/org/apache/hive/hive-metastore/4.0.1/hive-metastore-4.0.1.jar && \
-    wget https://repo1.maven.org/maven2/org/apache/hive/hive-common/4.0.1/hive-common-4.0.1.jar && \
-    wget https://repo1.maven.org/maven2/org/apache/hive/hive-storage-api/4.0.1/hive-storage-api-4.0.1.jar && \
-    wget https://repo1.maven.org/maven2/org/apache/hive/hive-serde/4.0.1/hive-serde-4.0.1.jar && \
-    mv hive-metastore-4.0.1.jar ${SPARK_HOME}/jars && \
-    mv hive-common-4.0.1.jar ${SPARK_HOME}/jars && \
-    mv hive-storage-api-4.0.1.jar ${SPARK_HOME}/jars && \
-    mv hive-serde-4.0.1.jar ${SPARK_HOME}/jars
+# RUN wget https://repo1.maven.org/maven2/org/apache/hive/hive-metastore/4.0.1/hive-metastore-4.0.1.jar && \
+#     wget https://repo1.maven.org/maven2/org/apache/hive/hive-common/4.0.1/hive-common-4.0.1.jar && \
+#     wget https://repo1.maven.org/maven2/org/apache/hive/hive-storage-api/4.0.1/hive-storage-api-4.0.1.jar && \
+#     wget https://repo1.maven.org/maven2/org/apache/hive/hive-serde/4.0.1/hive-serde-4.0.1.jar && \
+#     mv hive-metastore-4.0.1.jar ${SPARK_HOME}/jars && \
+#     mv hive-common-4.0.1.jar ${SPARK_HOME}/jars && \
+#     mv hive-storage-api-4.0.1.jar ${SPARK_HOME}/jars && \
+#     mv hive-serde-4.0.1.jar ${SPARK_HOME}/jars
     
 COPY spark-defaults.conf ${SPARK_CONF_DIR}/spark-defaults.conf
+COPY ./core-site.xml ${SPARK_CONF_DIR}
+COPY ./hdfs-site.xml ${SPARK_CONF_DIR}
+COPY ./hive-site.xml ${SPARK_CONF_DIR}
+COPY ./yarn-site.xml ${SPARK_CONF_DIR}
 
-COPY ./hive_teste_2.py ${SPARK_HOME}
+COPY ./hive_teste.py ${SPARK_HOME}
 
-CMD ["bash", "-c",  "${SPARK_HOME}/bin/spark-submit  --master yarn --deploy-mode cluster ${SPARK_HOME}/hive_teste_2.py"]
+CMD ["bash", "-c",  "${SPARK_HOME}/bin/spark-submit  --master yarn --deploy-mode cluster ${SPARK_HOME}/hive_teste.py"]
+
+# CMD ["bash", "-c", "$SPARK_HOME/bin/spark-submit --master yarn --deploy-mode cluster --files $SPARK_CONF_DIR/hive-site.xml --conf spark.sql.warehouse.dir=hdfs://masternode:9000/lakehouse --conf \"spark.yarn.am.extraJavaOptions=-Dhive.metastore.uris=thrift://masternode:9083\" $SPARK_HOME/hive_teste.py"]

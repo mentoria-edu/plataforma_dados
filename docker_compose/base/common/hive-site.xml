@@ -18,8 +18,12 @@
         <value>1234</value>
     </property>
     <property>
+        <name>hive.metastore.port</name>
+        <value>9085</value>
+    </property>
+    <property>
         <name>hive.metastore.uris</name>
-        <value>thrift://masternode:9083</value>
+        <value>thrift://masternode:9085</value>
     </property>   
     <property>
         <name>hive.metastore.warehouse.dir</name>
