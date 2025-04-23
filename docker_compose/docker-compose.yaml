@@ -88,7 +88,7 @@ services:
       - CLIENT_NODE=true
     container_name: client_node
     ports:
-      - "8080:8080"
+      - "9090:9090"
     depends_on:
       master_node:
         condition: service_healthy

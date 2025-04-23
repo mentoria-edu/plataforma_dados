@@ -95,6 +95,7 @@ COPY ${FOLDER_COMMON_FILES}/core-site.xml ${SPARK_CONF_DIR}/core-site.xml
 COPY ${FOLDER_COMMON_FILES}/hive-site.xml ${SPARK_CONF_DIR}/hive-site.xml
 COPY ${FOLDER_COMMON_FILES}/scripts/teste.py ${SPARK_HOME}/teste.py
 COPY ${FOLDER_COMMON_FILES}/scripts/hive_teste.py ${SPARK_HOME}/hive_teste.py
+COPY ${FOLDER_COMMON_FILES}/log4j2.properties ${SPARK_CONF_DIR}/log4j2.properties
 
 COPY ./entrypoint.sh ${BASE_DIR_PATH}/entrypoint.sh
 ENTRYPOINT ["bash", "-c", "bash /opt/entrypoint.sh"]
