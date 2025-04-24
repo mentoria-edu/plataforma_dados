@@ -3,7 +3,7 @@ services:
     image: postgres:17.4
     container_name: postgres
     environment:
-      - POSTGRES_PASSWORD=1234
+      - POSTGRES_PASSWORD=1234   
     volumes:
       - ./data/postgres_data:/var/lib/postgresql/data
     ports:
@@ -18,9 +18,12 @@ services:
       hadoop_network:
         ipv4_address: 172.20.0.2
 
-
   master_node:
-    build: ./base/.
+    build:
+      context: ./base/.
+      args:
+        SPECIFIC_NODE: master
+        CLIENT_NODE: "false"
     environment:
       - SPECIFIC_NODE=master
       - CLIENT_NODE=false
@@ -31,11 +34,10 @@ services:
       - "8030:8030"     # ResourceManager Scheduler RPC
       - "8031:8031"     # ResourceManager ResourceTracker
       - "8032:8032"
-      - "8033:8033"     # ResourceManager Admin
-      - "8042:8042"     # NodeManager Web UI
+      - "8033:8033"     # ResourceManager Admin      
       - "8088:8088"     # ResourceManager Web UI
-      - "9000:9000"     # HDFS
-      - "9085:9085"     # Hive Metastore Thrift
+      - "9000:9000"     # HDFS    
+      - "9083:9083"     # Thrift Server Port
       - "9866:9866"     # DataNode transferência de blocos
       - "9868:9868"     # Secondary NameNode Web UI
       - "9870:9870"     # NameNode Web UI
@@ -59,15 +61,20 @@ services:
         ipv4_address: 172.20.0.3
 
   worker_node:
-    build: ./base/.
+    build:
+      context: ./base/.
+      args:
+        SPECIFIC_NODE: worker
+        CLIENT_NODE: "false"   
     environment:
       - SPECIFIC_NODE=worker
       - CLIENT_NODE=false
     container_name: worker_node
     ports:
       - "9864:9864"     # DataNode Web UI
+      - "8042:8042"     # NodeManager Web UI
     healthcheck:
-      test: ["CMD", "bash", "-c", "netstat -tulpn | grep -q ':9864'"]
+      test: ["CMD", "bash", "-c", "netstat -tulpn | grep -q ':9864' && netstat -tulpn | grep -q ':8042'"]
       interval: 10s
       timeout: 10s
       retries: 5
@@ -82,7 +89,11 @@ services:
         ipv4_address: 172.20.0.4
 
   client_node:
-    build: ./base/.
+    build:
+      context: ./base/.
+      args:
+        SPECIFIC_NODE: master
+        CLIENT_NODE: "true"
     environment:
       - SPECIFIC_NODE=master
       - CLIENT_NODE=true
@@ -99,7 +110,7 @@ services:
     networks:
       hadoop_network:
         ipv4_address: 172.20.0.5
- 
+
 networks:
   hadoop_network:
     name: hadoop_network
