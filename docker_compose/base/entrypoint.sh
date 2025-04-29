@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euxo pipefail
 
 # Configuração do hostname
 # echo "127.0.0.1 masternode" >> /etc/hosts
@@ -63,6 +63,7 @@ if [ "$CLIENT_NODE" == "false" ]; then
       hadoop fs -mkdir -p /spark_events 
       hadoop fs -mkdir -p /lakehouse
       hadoop fs -mkdir -p /yarn_logs
+      hadoop fs -mkdir -p /spark_events_log
       # hadoop fs -chmod -R 777 /warehouse /spark_events /lakehouse /yarn_logs
       
       # Iniciar ResourceManager
@@ -71,7 +72,7 @@ if [ "$CLIENT_NODE" == "false" ]; then
 
       # Inicializar Hive
       echo "Configurando Hive Metastore..."
-      schematool -dbType postgres -info || schematool -dbType postgres -initSchemaTo 3.1.3
+      schematool -dbType postgres -info || schematool -dbType postgres -initSchema
       
       # Iniciar serviço Hive Metastore
       echo "Iniciando Hive Metastore..."
@@ -87,12 +88,18 @@ if [ "$CLIENT_NODE" == "false" ]; then
     echo "Ambiente Hadoop inicializado com sucesso!"
 
   elif [ "$SPECIFIC_NODE" == "worker" ]; then
+    echo "Chamando o logs_yarn.sh..."
+    bash ${HADOOP_HOME}/bin/logs_yarn.sh > /tmp/logs/logs_yarn.log 2>&1 &
+    echo "Logs yarn chamado."
+
+    chown -R ${UID}:${GID} /tmp/logs
+
     echo "Iniciando HDFS datanode..."
     hdfs --daemon start datanode 
     
     echo "Iniciando YARN nodemanager..."
     yarn --daemon start nodemanager
-
+   
   else
     echo "Valor inválido para SPECIFIC_NODE. Use 'master', 'worker'."
     exit 1
@@ -103,7 +110,7 @@ elif [ "$CLIENT_NODE" == "true" ]; then
     Todos os arquivos de configurações estão presentes, \
     mas nada é inicializado" 
 
-    ${SPARK_HOME}/bin/spark-submit  --master yarn --deploy-mode cluster ${SPARK_HOME}/hive_teste.py
+    ${SPARK_HOME}/bin/spark-submit  --master yarn --deploy-mode cluster ${SPARK_HOME}/examples/src/main/python/pi.py
 
 else
   echo "Valor inválido para CLIENT_NODE. Use 'true' ou 'false'."

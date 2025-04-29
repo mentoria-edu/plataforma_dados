@@ -16,6 +16,9 @@ ARG LINK_DOWNLOAD_SPARK="https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/s
 ARG LINK_DOWNLOAD_HIVE="https://archive.apache.org/dist/hive/hive-${HIVE_VERSION}/apache-hive-${HIVE_VERSION}-bin.tar.gz"
 ARG LINK_JAR_POSTGRES="https://repo1.maven.org/maven2/org/postgresql/postgresql/${JAR_POSTGRES_VERSION}/postgresql-${JAR_POSTGRES_VERSION}.jar"
 
+ENV SPECIFIC_NODE=${SPECIFIC_NODE}
+ENV CLIENT_NODE=${CLIENT_NODE}
+
 ENV HADOOP_HOME="${BASE_DIR_PATH}/hadoop"
 ENV SPARK_HOME="${BASE_DIR_PATH}/spark"
 ENV HIVE_HOME="${BASE_DIR_PATH}/hive"
@@ -54,7 +57,7 @@ RUN apt update && \
     krb5-user \
     libnss3  \
     net-tools \
-    wget && \
+    inotify-tools && \  
     rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p ${HADOOP_HOME} && \
@@ -76,7 +79,10 @@ RUN mkdir -p ${HADOOP_HOME} && \
 
 RUN mkdir -p /opt/hadoop/dfs/data && \
     mkdir -p /opt/hadoop/dfs/name && \  
-    mkdir -p /tmp/logs
+    mkdir -p /tmp/logs && \
+    mkdir -p /tmp/dir && \
+    mkdir -p /opt/hadoop/logs
+
 
 RUN echo "export JAVA_HOME=${JAVA_HOME}" >> $HADOOP_HOME/etc/hadoop/hadoop-env.sh && \
     echo 'export HADOOP_HOME=$HADOOP_HOME' >> $HIVE_HOME/bin/hive_config.sh
@@ -95,7 +101,7 @@ COPY ${FOLDER_COMMON_FILES}/core-site.xml ${SPARK_CONF_DIR}/core-site.xml
 COPY ${FOLDER_COMMON_FILES}/hive-site.xml ${SPARK_CONF_DIR}/hive-site.xml
 COPY ${FOLDER_COMMON_FILES}/scripts/teste.py ${SPARK_HOME}/teste.py
 COPY ${FOLDER_COMMON_FILES}/scripts/hive_teste.py ${SPARK_HOME}/hive_teste.py
-COPY ${FOLDER_COMMON_FILES}/log4j2.properties ${SPARK_CONF_DIR}/log4j2.properties
+COPY ${FOLDER_COMMON_FILES}/scripts/logs_yarn.sh ${HADOOP_HOME}/bin
 
 COPY ./entrypoint.sh ${BASE_DIR_PATH}/entrypoint.sh
 ENTRYPOINT ["bash", "-c", "bash /opt/entrypoint.sh"]

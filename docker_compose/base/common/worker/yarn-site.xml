@@ -14,21 +14,17 @@
     <property>
 	    <name>yarn.nodemanager.aux-services.spark_shuffle.classpath</name>
 	    <value>/opt/spark/yarn/*</value>
-    </property>
-	<property>
-	    <name>yarn.log-aggregation-enable</name>
-	    <value>true</value>
-    </property>
-	<property>
-	    <name>yarn.nodemanager.remote-app-log-dir</name>
-	    <value>hdfs://masternode:9000/yarn_logs</value>
-    </property>	
-	<property>
-	    <name>yarn.log-aggregation.retain-seconds</name>
-	    <value>86400</value>
-    </property>
+    </property>		   
 	<property>
 	    <name>yarn.nodemanager.log-dirs</name>
 	    <value>/tmp/logs</value>
-    </property>			
+    </property>
+	<property>
+	    <name>yarn.nodemanager.local-dirs</name>
+	    <value>/tmp/dir</value>
+    </property>    
+	<property>
+		<name>yarn.nodemanager.webapp.address</name>
+		<value>0.0.0.0:8042</value>
+	</property>  			
 </configuration>
