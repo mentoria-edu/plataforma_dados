@@ -88,17 +88,17 @@ if [ "$CLIENT_NODE" == "false" ]; then
     echo "Ambiente Hadoop inicializado com sucesso!"
 
   elif [ "$SPECIFIC_NODE" == "worker" ]; then
-    echo "Chamando o logs_yarn.sh..."
-    bash ${HADOOP_HOME}/bin/logs_yarn.sh > /tmp/logs/logs_yarn.log 2>&1 &
-    echo "Logs yarn chamado."
+    # echo "Chamando o logs_yarn.sh..."
+    # bash ${HADOOP_HOME}/bin/logs_yarn.sh > /tmp/logs/logs_yarn.log 2>&1 &
+    # echo "Logs yarn chamado."
 
-    chown -R ${UID}:${GID} /tmp/logs
+    #chown -R ${UID}:${GID} /tmp/logs
 
     echo "Iniciando HDFS datanode..."
     hdfs --daemon start datanode 
     
     echo "Iniciando YARN nodemanager..."
-    yarn --daemon start nodemanager
+    yarn nodemanager
    
   else
     echo "Valor inválido para SPECIFIC_NODE. Use 'master', 'worker'."

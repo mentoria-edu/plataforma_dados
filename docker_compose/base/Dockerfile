@@ -24,7 +24,9 @@ ENV SPARK_HOME="${BASE_DIR_PATH}/spark"
 ENV HIVE_HOME="${BASE_DIR_PATH}/hive"
 
 ENV HADOOP_CONF_DIR="${BASE_DIR_PATH}/hadoop/etc/hadoop"
+ENV HADOOP_BIN_DIR="${HADOOP_HOME}/bin"
 ENV YARN_CONF_DIR="${HADOOP_CONF_DIR}"
+ENV YARN_CONTAINER_RUNTIME_DOCKER_MOUNTS="/logs:/tmp/logs:rw"
 
 ENV SPARK_CONF_DIR="${SPARK_HOME}/conf"
 ENV SPARK_SBIN_DIR="${SPARK_HOME}/sbin"
@@ -56,9 +58,12 @@ RUN apt update && \
     tini \
     krb5-user \
     libnss3  \
-    net-tools \
-    inotify-tools && \  
-    rm -rf /var/lib/apt/lists/*
+    net-tools    
+    #rm -rf /var/lib/apt/lists/*
+
+RUN wget http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb && \
+    dpkg -i libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb && \
+    rm libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb    
 
 RUN mkdir -p ${HADOOP_HOME} && \
     mkdir -p ${SPARK_HOME} && \
@@ -101,7 +106,14 @@ COPY ${FOLDER_COMMON_FILES}/core-site.xml ${SPARK_CONF_DIR}/core-site.xml
 COPY ${FOLDER_COMMON_FILES}/hive-site.xml ${SPARK_CONF_DIR}/hive-site.xml
 COPY ${FOLDER_COMMON_FILES}/scripts/teste.py ${SPARK_HOME}/teste.py
 COPY ${FOLDER_COMMON_FILES}/scripts/hive_teste.py ${SPARK_HOME}/hive_teste.py
-COPY ${FOLDER_COMMON_FILES}/scripts/logs_yarn.sh ${HADOOP_HOME}/bin
+#COPY ${FOLDER_COMMON_FILES}/scripts/logs_yarn.sh ${HADOOP_HOME}/bin
+COPY ${FOLDER_COMMON_FILES}/container-executor.cfg ${HADOOP_CONF_DIR}/
+
+RUN groupadd -g 1000 nobody && \
+    usermod -u 1000 nobody    
+
+RUN chown -R root:root ${HADOOP_HOME} && \
+    chmod 6050 ${HADOOP_BIN_DIR}/container-executor
 
 COPY ./entrypoint.sh ${BASE_DIR_PATH}/entrypoint.sh
 ENTRYPOINT ["bash", "-c", "bash /opt/entrypoint.sh"]
