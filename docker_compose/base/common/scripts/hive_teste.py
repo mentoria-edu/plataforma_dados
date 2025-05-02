@@ -19,7 +19,7 @@ print(f"Conectado ao Hive Metastore em: thrift://{metastore_host}:{metastore_por
 dados = [(1, "Nome_1"), (2, "Nome_2"), (3, "Nome_3")]
 df = spark.createDataFrame(dados, ["id", "nome"])
 
-df.write.mode("overwrite").saveAsTable("bronze.teste_simples")
+df.write.mode("overwrite").saveAsTable("bronze.teste_simples1")
 
 print("DataFrame salvo com sucesso no Hive Metastore remoto!")
 spark.stop()

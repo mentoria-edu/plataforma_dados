@@ -75,7 +75,8 @@ services:
     environment:
       <<: *common-env
       SPECIFIC_NODE: "worker"
-      CLIENT_NODE: "false"    
+      CLIENT_NODE: "false"
+    container_name: workernode      
     ports:
       - "9864:9864"     # DataNode Web UI
       - "8042:8042"     # NodeManager Web UI 

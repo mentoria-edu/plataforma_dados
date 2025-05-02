@@ -58,7 +58,8 @@ RUN apt update && \
     tini \
     krb5-user \
     libnss3  \
-    net-tools    
+    net-tools \
+    inotify-tools   
     #rm -rf /var/lib/apt/lists/*
 
 RUN wget http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb && \
@@ -82,10 +83,13 @@ RUN mkdir -p ${HADOOP_HOME} && \
     rm ${SPARK_TAR_GZ_FILE} && \
     rm ${HIVE_TAR_GZ_FILE}
 
+#RUN cp ${SPARK_HOME}/jars/commons-collections-3.2.2.jar ${HIVE_HOME}/lib/   
+
 RUN mkdir -p /opt/hadoop/dfs/data && \
     mkdir -p /opt/hadoop/dfs/name && \  
     mkdir -p /tmp/logs && \
     mkdir -p /tmp/dir && \
+    mkdir -p /tmp/spark && \
     mkdir -p /opt/hadoop/logs
 
 
@@ -106,14 +110,18 @@ COPY ${FOLDER_COMMON_FILES}/core-site.xml ${SPARK_CONF_DIR}/core-site.xml
 COPY ${FOLDER_COMMON_FILES}/hive-site.xml ${SPARK_CONF_DIR}/hive-site.xml
 COPY ${FOLDER_COMMON_FILES}/scripts/teste.py ${SPARK_HOME}/teste.py
 COPY ${FOLDER_COMMON_FILES}/scripts/hive_teste.py ${SPARK_HOME}/hive_teste.py
-#COPY ${FOLDER_COMMON_FILES}/scripts/logs_yarn.sh ${HADOOP_HOME}/bin
-COPY ${FOLDER_COMMON_FILES}/container-executor.cfg ${HADOOP_CONF_DIR}/
+COPY ${FOLDER_COMMON_FILES}/scripts/logs_yarn.sh ${HADOOP_HOME}/bin
+#COPY ${FOLDER_COMMON_FILES}/container-executor.cfg ${HADOOP_CONF_DIR}/
 
-RUN groupadd -g 1000 nobody && \
-    usermod -u 1000 nobody    
+# RUN set -ex; \
+#     if [ "${SPECIFIC_NODE}" = "worker" ]; then \
+#         groupadd -g 1000 nobody; \
+#         usermod -u 1000 nobody; \
+#         chown -R root:root ${HADOOP_HOME}; \
+#         chmod 6050 ${HADOOP_BIN_DIR}/container-executor; \
+#     fi
 
-RUN chown -R root:root ${HADOOP_HOME} && \
-    chmod 6050 ${HADOOP_BIN_DIR}/container-executor
+#RUN cp -r ${HIVE_HOME}/lib/* $SPARK_HOME/jars/  
 
 COPY ./entrypoint.sh ${BASE_DIR_PATH}/entrypoint.sh
 ENTRYPOINT ["bash", "-c", "bash /opt/entrypoint.sh"]

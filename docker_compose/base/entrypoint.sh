@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euxo pipefail
+set -e
 
 # Configuração do hostname
 # echo "127.0.0.1 masternode" >> /etc/hosts
@@ -87,18 +87,15 @@ if [ "$CLIENT_NODE" == "false" ]; then
   
     echo "Ambiente Hadoop inicializado com sucesso!"
 
-  elif [ "$SPECIFIC_NODE" == "worker" ]; then
-    # echo "Chamando o logs_yarn.sh..."
-    # bash ${HADOOP_HOME}/bin/logs_yarn.sh > /tmp/logs/logs_yarn.log 2>&1 &
-    # echo "Logs yarn chamado."
+  elif [ "$SPECIFIC_NODE" == "worker" ]; then 
 
-    #chown -R ${UID}:${GID} /tmp/logs
-
+    bash logs_yarn.sh > /tmp/logs_yarn.log 2>&1 &
+   
     echo "Iniciando HDFS datanode..."
     hdfs --daemon start datanode 
     
     echo "Iniciando YARN nodemanager..."
-    yarn nodemanager
+    yarn --daemon start nodemanager
    
   else
     echo "Valor inválido para SPECIFIC_NODE. Use 'master', 'worker'."
@@ -109,11 +106,13 @@ elif [ "$CLIENT_NODE" == "true" ]; then
     echo "Container inicializado em modo Client. \
     Todos os arquivos de configurações estão presentes, \
     mas nada é inicializado" 
+    
 
-    ${SPARK_HOME}/bin/spark-submit  --master yarn --deploy-mode cluster ${SPARK_HOME}/examples/src/main/python/pi.py
+    ${SPARK_HOME}/bin/spark-submit --master yarn ${SPARK_HOME}/hive_teste.py
 
 else
   echo "Valor inválido para CLIENT_NODE. Use 'true' ou 'false'."
     exit 1
 fi
+
 tail -f /dev/null

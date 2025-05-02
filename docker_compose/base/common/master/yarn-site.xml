@@ -3,8 +3,6 @@
 		<name>yarn.resourcemanager.hostname</name>
 		<value>masternode</value>
 	</property>
-
-	<!-- Inicio configurações Cloude-->
     <property>
         <name>yarn.resourcemanager.address</name>
         <value>${yarn.resourcemanager.hostname}:8032</value>
@@ -25,12 +23,7 @@
         <name>yarn.resourcemanager.bind-host</name>
         <value>0.0.0.0</value>
     </property>
-
-	<!-- Fim configurações Cloude-->
-
-
-
-	<property>
+	<!-- <property>
 		<name>yarn.nodemanager.aux-services</name>
 		<value>spark_shuffle</value>
 	</property>
@@ -41,21 +34,17 @@
     <property>
 	    <name>yarn.nodemanager.aux-services.spark_shuffle.classpath</name>
 	    <value>/opt/spark/yarn/*</value>
-    </property>
+    </property> -->
 	<property>
 		<name>yarn.resourcemanager.webapp.address</name>
 		<value>0.0.0.0:8088</value>
 	</property>		
-    <property>
+    <!-- <property>
         <name>yarn.nodemanager.local-dirs</name>
         <value>/tmp/dir</value>
     </property> 
 	<property>
 	    <name>yarn.nodemanager.log-dirs</name>
 	    <value>/tmp/logs</value>
-    </property>  
-    <property>
-        <name>yarn.log.server.url</name>
-        <value>http://masternode:8188/applicationhistory</value>
-    </property>	
+    </property>      -->
 </configuration>
