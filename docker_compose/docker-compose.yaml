@@ -1,6 +1,7 @@
 x-common-env: &common-env
     UID: $UID
     GID: $GID
+    LOG_SCRIPT_DIR: $LOG_SCRIPT_DIR
 
 services:
   postgres:
