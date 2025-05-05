@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 inotifywait -m -r -e close_write --format '%w%f' "$LOG_SCRIPT_DIR" | while read -r FILE_DIR; do

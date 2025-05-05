@@ -10,6 +10,8 @@ ARG USER_HDFS="root"
 ARG FOLDER_COMMON_FILES="./common"
 ARG CLIENT_NODE="false"
 ARG SPECIFIC_NODE="master"
+ARG FOLDER_COMMON_FILES="./common"
+ARG FOLDER_SCRIPTS_FILES="./scripts"
 
 ARG LINK_DOWNLOAD_HADOOP="https://dlcdn.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz"
 ARG LINK_DOWNLOAD_SPARK="https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz"
@@ -18,6 +20,9 @@ ARG LINK_JAR_POSTGRES="https://repo1.maven.org/maven2/org/postgresql/postgresql/
 
 ENV SPECIFIC_NODE=${SPECIFIC_NODE}
 ENV CLIENT_NODE=${CLIENT_NODE}
+
+ENV GENERAL_CONFIGS="${BASE_DIR_PATH}/config"
+ENV GENERAL_SCRIPTS="${BASE_DIR_PATH}/scripts"
 
 ENV HADOOP_HOME="${BASE_DIR_PATH}/hadoop"
 ENV SPARK_HOME="${BASE_DIR_PATH}/spark"
@@ -59,17 +64,14 @@ RUN apt update && \
     krb5-user \
     libnss3  \
     net-tools \
-    inotify-tools   
-    #rm -rf /var/lib/apt/lists/*
+    inotify-tools    
 
-RUN wget http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb && \
-    dpkg -i libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb && \
-    rm libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb    
+# RUN wget http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb && \
+#     dpkg -i libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb && \
+#     rm libssl1.1_1.1.1f-1ubuntu2.24_amd64.deb    
 
 RUN mkdir -p ${HADOOP_HOME} && \
     mkdir -p ${SPARK_HOME} && \
-    # TESTE !! Apagar depois!
-    mkdir -p ${SPARK_HOME}/hive_jars && \
     mkdir -p ${HIVE_HOME} && \
     wget ${LINK_DOWNLOAD_HADOOP} -O ${HADOOP_TAR_GZ_FILE} && \
     wget ${LINK_DOWNLOAD_SPARK} -O ${SPARK_TAR_GZ_FILE} && \
@@ -83,15 +85,14 @@ RUN mkdir -p ${HADOOP_HOME} && \
     rm ${SPARK_TAR_GZ_FILE} && \
     rm ${HIVE_TAR_GZ_FILE}
 
-#RUN cp ${SPARK_HOME}/jars/commons-collections-3.2.2.jar ${HIVE_HOME}/lib/   
-
-RUN mkdir -p /opt/hadoop/dfs/data && \
-    mkdir -p /opt/hadoop/dfs/name && \  
+RUN mkdir -p ${GENERAL_CONFIGS} && \
+    mkdir -p ${GENERAL_SCRIPTS} && \
+    mkdir -p ${HADOOP_HOME}/dfs/data && \
+    mkdir -p ${HADOOP_HOME}/dfs/name && \  
     mkdir -p /tmp/logs && \
     mkdir -p /tmp/dir && \
     mkdir -p /tmp/spark && \
-    mkdir -p /opt/hadoop/logs
-
+    mkdir -p ${HADOOP_HOME}/logs
 
 RUN echo "export JAVA_HOME=${JAVA_HOME}" >> $HADOOP_HOME/etc/hadoop/hadoop-env.sh && \
     echo 'export HADOOP_HOME=$HADOOP_HOME' >> $HIVE_HOME/bin/hive_config.sh
@@ -100,28 +101,15 @@ RUN ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa && \
     cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys && \
     chmod 0600 ~/.ssh/authorized_keys
 
-COPY ${FOLDER_COMMON_FILES}/spark-defaults.conf ${SPARK_CONF_DIR}/spark-defaults.conf
-COPY ${FOLDER_COMMON_FILES}/core-site.xml ${HADOOP_CONF_DIR}/core-site.xml
-COPY ${FOLDER_COMMON_FILES}/hive-site.xml ${HADOOP_CONF_DIR}/hive-site.xml
-COPY ${FOLDER_COMMON_FILES}/${SPECIFIC_NODE}/hdfs-site.xml ${HADOOP_CONF_DIR}/hdfs-site.xml
-COPY ${FOLDER_COMMON_FILES}/${SPECIFIC_NODE}/yarn-site.xml ${HADOOP_CONF_DIR}/yarn-site.xml
-COPY ${FOLDER_COMMON_FILES}/master/hdfs-site.xml ${SPARK_CONF_DIR}/hdfs-site.xml
-COPY ${FOLDER_COMMON_FILES}/core-site.xml ${SPARK_CONF_DIR}/core-site.xml
-COPY ${FOLDER_COMMON_FILES}/hive-site.xml ${SPARK_CONF_DIR}/hive-site.xml
-COPY ${FOLDER_COMMON_FILES}/scripts/teste.py ${SPARK_HOME}/teste.py
-COPY ${FOLDER_COMMON_FILES}/scripts/hive_teste.py ${SPARK_HOME}/hive_teste.py
-COPY ${FOLDER_COMMON_FILES}/scripts/logs_yarn.sh ${HADOOP_HOME}/bin
-#COPY ${FOLDER_COMMON_FILES}/container-executor.cfg ${HADOOP_CONF_DIR}/
+COPY ${FOLDER_COMMON_FILES}/* ${GENERAL_CONFIGS}
+COPY ${FOLDER_SCRIPTS_FILES}/* ${GENERAL_SCRIPTS}
 
-# RUN set -ex; \
-#     if [ "${SPECIFIC_NODE}" = "worker" ]; then \
-#         groupadd -g 1000 nobody; \
-#         usermod -u 1000 nobody; \
-#         chown -R root:root ${HADOOP_HOME}; \
-#         chmod 6050 ${HADOOP_BIN_DIR}/container-executor; \
-#     fi
-
-#RUN cp -r ${HIVE_HOME}/lib/* $SPARK_HOME/jars/  
+RUN cp ${GENERAL_CONFIGS}/* ${HADOOP_CONF_DIR}/ && \
+    cp ${GENERAL_CONFIGS}/* ${SPARK_CONF_DIR}/ && \
+    cp ${GENERAL_SCRIPTS}/* ${SPARK_CONF_DIR}/ && \
+    cp ${GENERAL_SCRIPTS}/logs_yarn.sh ${HADOOP_BIN_DIR}/ && \
+    rm -r ${GENERAL_CONFIGS} && \
+    rm -r ${GENERAL_SCRIPTS}
 
 COPY ./entrypoint.sh ${BASE_DIR_PATH}/entrypoint.sh
 ENTRYPOINT ["bash", "-c", "bash /opt/entrypoint.sh"]
