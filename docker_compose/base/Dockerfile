@@ -1,13 +1,24 @@
 FROM eclipse-temurin:8-jdk-jammy
 
-ARG BASE_DIR_PATH="/opt"
+# ARG hadoop_uid="1000"
 
+# RUN groupadd --system --gid=${hadoop_uid} hadoop && \
+#     useradd --system --uid=${hadoop_uid} --gid=hadoop hadoop
+
+ENV YARN_RESOURCEMANAGER_USER="root"
+ENV YARN_NODEMANAGER_USER="root"
+
+ARG BASE_DIR_PATH="/opt"
 ARG HADOOP_VERSION="3.3.6"
 ARG HIVE_VERSION="3.1.3"
 ARG SPARK_VERSION="3.5.5"
 ARG JAR_POSTGRES_VERSION="42.7.5"
 ARG USER_HDFS="root"
 ARG FOLDER_COMMON_FILES="./common"
+ARG FOLDER_SCRIPTS_FILES="./scripts"
+
+# APAGAR DEPOIS!!
+ARG FOLDER_APPLICATIONS_FILES="./applications"
 ARG CLIENT_NODE="false"
 ARG SPECIFIC_NODE="master"
 
@@ -18,6 +29,9 @@ ARG LINK_JAR_POSTGRES="https://repo1.maven.org/maven2/org/postgresql/postgresql/
 
 ENV SPECIFIC_NODE=${SPECIFIC_NODE}
 ENV CLIENT_NODE=${CLIENT_NODE}
+
+ENV GENERAL_CONFIGS="${BASE_DIR_PATH}/config"
+ENV GENERAL_SCRIPTS="${BASE_DIR_PATH}/scripts"
 
 ENV HADOOP_HOME="${BASE_DIR_PATH}/hadoop"
 ENV SPARK_HOME="${BASE_DIR_PATH}/spark"
@@ -43,6 +57,9 @@ ENV HADOOP_TAR_GZ_FILE="${HADOOP_HOME}/hadoop-${HADOOP_VERSION}.tar.gz"
 ENV SPARK_TAR_GZ_FILE="${SPARK_HOME}/spark-${SPARK_VERSION}-bin-hadoop3.tgz"
 ENV HIVE_TAR_GZ_FILE="${HIVE_HOME}/apache-hive-${HIVE_VERSION}-bin.tar.gz"
 
+# APAGAR DEPOIS!!!
+ENV DEBUG_FOLDER="${BASE_DIR_PATH}/applications/"
+
 ENV PATH=$PATH:"$HIVE_HOME/bin"
 ENV PATH=$PATH:"$HADOOP_HOME/bin:$HADOOP_HOME/sbin"
 
@@ -67,53 +84,78 @@ RUN wget http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-
 
 RUN mkdir -p ${HADOOP_HOME} && \
     mkdir -p ${SPARK_HOME} && \
-    # TESTE !! Apagar depois!
-    mkdir -p ${SPARK_HOME}/hive_jars && \
-    mkdir -p ${HIVE_HOME} && \
-    wget ${LINK_DOWNLOAD_HADOOP} -O ${HADOOP_TAR_GZ_FILE} && \
-    wget ${LINK_DOWNLOAD_SPARK} -O ${SPARK_TAR_GZ_FILE} && \
-    wget ${LINK_DOWNLOAD_HIVE} -O ${HIVE_TAR_GZ_FILE} && \
-    wget ${LINK_JAR_POSTGRES} && \
-    tar -xvzf ${HADOOP_TAR_GZ_FILE} -C ${HADOOP_HOME} --strip-components=1 &&\
-    tar -xvzf ${SPARK_TAR_GZ_FILE} -C ${SPARK_HOME} --strip-components=1 && \
-    tar -xvzf ${HIVE_TAR_GZ_FILE} -C ${HIVE_HOME} --strip-components=1 && \
-    mv postgresql-${JAR_POSTGRES_VERSION}.jar ${HIVE_HOME}/lib && \ 
-    rm ${HADOOP_TAR_GZ_FILE} && \
-    rm ${SPARK_TAR_GZ_FILE} && \
-    rm ${HIVE_TAR_GZ_FILE}
+    mkdir -p ${HIVE_HOME} 
+    # wget ${LINK_DOWNLOAD_HADOOP} -O ${HADOOP_TAR_GZ_FILE} && \
+    # wget ${LINK_DOWNLOAD_SPARK} -O ${SPARK_TAR_GZ_FILE} && \
+    # wget ${LINK_DOWNLOAD_HIVE} -O ${HIVE_TAR_GZ_FILE} && \
+    # wget ${LINK_JAR_POSTGRES} && \
+    # tar -xvzf ${HADOOP_TAR_GZ_FILE} -C ${HADOOP_HOME} --strip-components=1 &&\
+    # tar -xvzf ${SPARK_TAR_GZ_FILE} -C ${SPARK_HOME} --strip-components=1 && \
+    # tar -xvzf ${HIVE_TAR_GZ_FILE} -C ${HIVE_HOME} --strip-components=1 && \
+    # mv postgresql-${JAR_POSTGRES_VERSION}.jar ${HIVE_HOME}/lib && \ 
+    # rm ${HADOOP_TAR_GZ_FILE} && \
+    # rm ${SPARK_TAR_GZ_FILE} && \
+    # rm ${HIVE_TAR_GZ_FILE}
 
-RUN mkdir -p /opt/hadoop/dfs/data && \
+RUN mkdir -p ${GENERAL_CONFIGS} && \
+    mkdir -p ${GENERAL_SCRIPTS} && \
+    mkdir -p ${DEBUG_FOLDER} && \
+    mkdir -p /opt/hadoop/dfs/data && \
     mkdir -p /opt/hadoop/dfs/name && \  
     mkdir -p /tmp/logs && \
     mkdir -p /tmp/dir && \
     mkdir -p /opt/hadoop/logs
 
 
-RUN echo "export JAVA_HOME=${JAVA_HOME}" >> $HADOOP_HOME/etc/hadoop/hadoop-env.sh && \
-    echo 'export HADOOP_HOME=$HADOOP_HOME' >> $HIVE_HOME/bin/hive_config.sh
+# RUN echo "export JAVA_HOME=${JAVA_HOME}" >> $HADOOP_HOME/etc/hadoop/hadoop-env.sh && \
+#     echo 'export HADOOP_HOME=$HADOOP_HOME' >> $HIVE_HOME/bin/hive_config.sh
 
 RUN ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa && \
     cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys && \
     chmod 0600 ~/.ssh/authorized_keys
 
-COPY ${FOLDER_COMMON_FILES}/spark-defaults.conf ${SPARK_CONF_DIR}/spark-defaults.conf
-COPY ${FOLDER_COMMON_FILES}/core-site.xml ${HADOOP_CONF_DIR}/core-site.xml
-COPY ${FOLDER_COMMON_FILES}/hive-site.xml ${HADOOP_CONF_DIR}/hive-site.xml
-COPY ${FOLDER_COMMON_FILES}/${SPECIFIC_NODE}/hdfs-site.xml ${HADOOP_CONF_DIR}/hdfs-site.xml
-COPY ${FOLDER_COMMON_FILES}/${SPECIFIC_NODE}/yarn-site.xml ${HADOOP_CONF_DIR}/yarn-site.xml
-COPY ${FOLDER_COMMON_FILES}/master/hdfs-site.xml ${SPARK_CONF_DIR}/hdfs-site.xml
-COPY ${FOLDER_COMMON_FILES}/core-site.xml ${SPARK_CONF_DIR}/core-site.xml
-COPY ${FOLDER_COMMON_FILES}/hive-site.xml ${SPARK_CONF_DIR}/hive-site.xml
-COPY ${FOLDER_COMMON_FILES}/scripts/teste.py ${SPARK_HOME}/teste.py
-COPY ${FOLDER_COMMON_FILES}/scripts/hive_teste.py ${SPARK_HOME}/hive_teste.py
-#COPY ${FOLDER_COMMON_FILES}/scripts/logs_yarn.sh ${HADOOP_HOME}/bin
-COPY ${FOLDER_COMMON_FILES}/container-executor.cfg ${HADOOP_CONF_DIR}/
+COPY ${FOLDER_COMMON_FILES}/* ${GENERAL_CONFIGS}
+COPY ${FOLDER_SCRIPTS_FILES}/* ${GENERAL_SCRIPTS}
+COPY ${FOLDER_APPLICATIONS_FILES}/ ${DEBUG_FOLDER}
 
-RUN groupadd -g 1000 nobody && \
-    usermod -u 1000 nobody    
+
+# Debug Apagr Depois!
+RUN tar -xvzf ${DEBUG_FOLDER}/hadoop-3.3.6.tar.gz -C ${HADOOP_HOME} --strip-components=1 &&\
+    tar -xvzf ${DEBUG_FOLDER}/spark-3.5.5-bin-hadoop3.tgz -C ${SPARK_HOME} --strip-components=1 && \
+    tar -xvzf ${DEBUG_FOLDER}/apache-hive-3.1.3-bin.tar.gz -C ${HIVE_HOME} --strip-components=1 && \
+    mv ${DEBUG_FOLDER}/postgresql-42.7.5.jar ${HIVE_HOME}/lib && \
+    cp ${GENERAL_CONFIGS}/* ${HADOOP_CONF_DIR}/ && \
+    cp ${GENERAL_SCRIPTS}/* ${SPARK_CONF_DIR}/ && \
+    rm -r ${GENERAL_CONFIGS} && \
+    rm -r ${GENERAL_SCRIPTS} && \
+    rm -r ${DEBUG_FOLDER} && \
+    echo "export JAVA_HOME=${JAVA_HOME}" >> $HADOOP_HOME/etc/hadoop/hadoop-env.sh && \
+    echo 'export HADOOP_HOME=$HADOOP_HOME' >> $HIVE_HOME/bin/hive_config.sh && \
+    service ssh start
+    
+# RUN groupadd -g 1000 nobody && \
+#     usermod -u 1000 nobody    
+
+# RUN chown -R root:root ${HADOOP_HOME} && \
+
+
+# RUN chmod 6050 ${HADOOP_BIN_DIR}/container-executor && \
+#     chown root:root /opt/hadoop/etc/hadoop/container-executor.cfg && \
+#     chmod 600 /opt/hadoop/etc/hadoop/container-executor.cfg
+
+# Modifique esta parte do seu Dockerfile
+# RUN chmod 6050 ${HADOOP_BIN_DIR}/container-executor && \
+#     chown root:root ${HADOOP_BIN_DIR}/container-executor && \
+#     chown root:root /opt/hadoop/etc/hadoop/container-executor.cfg && \
+#     chmod 400 /opt/hadoop/etc/hadoop/container-executor.cfg
+# Adicione ou modifique esta parte no seu Dockerfile
 
 RUN chown -R root:root ${HADOOP_HOME} && \
+    chown root:root ${HADOOP_BIN_DIR}/container-executor && \
+    chown root:root /opt/hadoop/etc/hadoop/container-executor.cfg && \
+    chmod 400 /opt/hadoop/etc/hadoop/container-executor.cfg && \
     chmod 6050 ${HADOOP_BIN_DIR}/container-executor
+# USER hadoop
 
-COPY ./entrypoint.sh ${BASE_DIR_PATH}/entrypoint.sh
-ENTRYPOINT ["bash", "-c", "bash /opt/entrypoint.sh"]
+# COPY ./entrypoint.sh ${BASE_DIR_PATH}/entrypoint.sh
+# ENTRYPOINT ["bash", "-c", "bash /opt/entrypoint.sh"]

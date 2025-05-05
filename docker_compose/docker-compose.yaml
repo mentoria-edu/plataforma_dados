@@ -1,16 +1,15 @@
-x-common-env: &common-env
-    UID: $UID
-    GID: $GID
-
+# x-common-env: &common-env
+    # UID: $UID
+    # GID: $GID
+    # # UID: 1000
+    # # GID: 1000
 services:
   postgres:
     image: postgres:17.4
     container_name: postgres
     environment:
-      <<: *common-env
+      # # <<: *common-env
       POSTGRES_PASSWORD: 1234        
-    volumes:
-      - ./data/postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
@@ -24,13 +23,14 @@ services:
         ipv4_address: 172.20.0.2
 
   master_node:
+    # image: imagem_base
     build:
-      context: ./base/.
+      context: ./master_node/.
       args:
         SPECIFIC_NODE: "master"
         CLIENT_NODE: "false"
     environment:
-      <<: *common-env
+      # <<: *common-env
       SPECIFIC_NODE: "master"
       CLIENT_NODE: "false"
     container_name: masternode
@@ -48,9 +48,6 @@ services:
       - "9868:9868"     # Secondary NameNode Web UI
       - "9870:9870"     # NameNode Web UI
       - "10000:10000"   # HiveServer2 JDBC/ODBC'
-    volumes:
-      # - ./data/hdfs_data:/opt/hadoop/dfs/name
-      - ./tst:/home 
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,13 +64,14 @@ services:
         ipv4_address: 172.20.0.3
 
   worker_node:
+    # image: imagem_base
     build:
-      context: ./base/.
+      context: ./worker_node/.
       args:
         SPECIFIC_NODE: "worker"
         CLIENT_NODE: "false"   
     environment:
-      <<: *common-env
+      # <<: *common-env
       SPECIFIC_NODE: "worker"
       CLIENT_NODE: "false"    
     ports:
@@ -97,13 +95,14 @@ services:
         ipv4_address: 172.20.0.4    
 
   client_node:
+    # image: imagem_base
     build:
-      context: ./base/.
+      context: ./client_node/.
       args:
         SPECIFIC_NODE: "master"
         CLIENT_NODE: "true"
     environment:
-      <<: *common-env
+      # <<: *common-env
       SPECIFIC_NODE: "master"
       CLIENT_NODE: "true"
     container_name: client_node
@@ -128,4 +127,4 @@ networks:
     ipam:
       config:
         - subnet: 172.20.0.0/16
-        - gateway: 172.20.0.1
+          gateway: 172.20.0.1

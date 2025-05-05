@@ -1,0 +1,186 @@
+<configuration>          
+	<property>
+		<name>yarn.resourcemanager.hostname</name>
+		<value>masternode</value>
+	</property>
+
+	<!-- Inicio configurações Cloude-->
+    <property>
+        <name>yarn.resourcemanager.address</name>
+        <value>${yarn.resourcemanager.hostname}:8032</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.scheduler.address</name>
+        <value>${yarn.resourcemanager.hostname}:8030</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.resource-tracker.address</name>
+        <value>${yarn.resourcemanager.hostname}:8031</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.admin.address</name>
+        <value>${yarn.resourcemanager.hostname}:8033</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.bind-host</name>
+        <value>0.0.0.0</value>
+    </property>
+
+	<!-- Fim configurações Cloude-->
+
+<!-- Inicio variáveis da documentação do Hadoop -->
+    <property>
+    <name>yarn.nodemanager.container-executor.class</name>
+    <value>org.apache.hadoop.yarn.server.nodemanager.LinuxContainerExecutor</value>
+    <description>
+      This is the container executor setting that ensures that all applications
+      are started with the LinuxContainerExecutor.
+    </description>
+  </property>
+
+  <property>
+    <name>yarn.nodemanager.linux-container-executor.group</name>
+    <value>root</value>
+    <description>
+      The POSIX group of the NodeManager. It should match the setting in
+      "container-executor.cfg". This configuration is required for validating
+      the secure access of the container-executor binary.
+    </description>
+  </property>
+
+  <property>
+    <name>yarn.nodemanager.linux-container-executor.nonsecure-mode.limit-users</name>
+    <value>true</value>
+    <description>
+      Whether all applications should be run as the NodeManager process' owner.
+      When false, applications are launched instead as the application owner.
+    </description>
+  </property>
+
+  <property>
+    <name>yarn.nodemanager.runtime.linux.allowed-runtimes</name>
+    <value>default,docker</value>
+    <description>
+      Comma separated list of runtimes that are allowed when using
+      LinuxContainerExecutor. The allowed values are default, docker, and
+      javasandbox.
+    </description>
+  </property>
+
+  <property>
+    <name>yarn.nodemanager.runtime.linux.docker.image-update</name>
+    <value>false</value>
+    <description>
+      Optional. Default option to decide whether to pull the latest image
+      or not.
+    </description>
+  </property>
+
+  <property>
+    <name>yarn.nodemanager.runtime.linux.docker.allowed-container-networks</name>
+    <value>host,none,bridge</value>
+    <description>
+      Optional. A comma-separated set of networks allowed when launching
+      containers. Valid values are determined by Docker networks available from
+      `docker network ls`
+    </description>
+  </property>
+
+  <property>
+    <name>yarn.nodemanager.runtime.linux.docker.default-container-network</name>
+    <value>bridge</value>
+    <description>
+      The network used when launching Docker containers when no
+      network is specified in the request. This network must be one of the
+      (configurable) set of allowed container networks.
+    </description>
+  </property>
+
+  <property>
+    <name>yarn.nodemanager.runtime.linux.docker.capabilities</name>
+    <value>CHOWN,DAC_OVERRIDE,FSETID,FOWNER,MKNOD,NET_RAW,SETGID,SETUID,SETFCAP,SETPCAP,NET_BIND_SERVICE,SYS_CHROOT,KILL,AUDIT_WRITE</value>
+    <description>
+      Optional. This configuration setting determines the capabilities
+      assigned to docker containers when they are launched. While these may not
+      be case-sensitive from a docker perspective, it is best to keep these
+      uppercase. To run without any capabilites, set this value to
+      "none" or "NONE"
+    </description>
+  </property>
+
+  <property>
+    <name>yarn.nodemanager.runtime.linux.docker.enable-userremapping.allowed</name>
+    <value>true</value>
+    <description>
+      Optional. Whether docker containers are run with the UID and GID of the
+      calling user.
+    </description>
+  </property>
+
+	<!-- Define o runtime padrão como Docker -->
+	<property>
+		<name>yarn.nodemanager.runtime.linux.container-runtime.class</name>
+		<value>org.apache.hadoop.yarn.server.nodemanager.runtime.DockerLinuxContainerRuntime</value>
+	</property>
+
+	<!-- Diretório onde o container-executor.cfg está (geralmente é /etc/hadoop/) -->
+	<property>
+		<name>yarn.nodemanager.linux-container-executor.configuration.file</name>
+		<value>/etc/hadoop/container-executor.cfg</value>
+	</property>
+
+	<!-- Ativa o modo privileged se você precisa que os containers façam mount com root -->
+	<property>
+		<name>yarn.nodemanager.runtime.linux.docker.privileged-containers.allowed</name>
+		<value>true</value>
+	</property>
+
+	<!-- Modo de rede (host ou bridge) -->
+	<property>
+		<name>yarn.nodemanager.runtime.linux.docker.network</name>
+		<value>bridge</value>
+	</property>
+
+	<!-- Habilita que o NodeManager aceite variáveis de env para o mount -->
+	<property>
+		<name>yarn.nodemanager.runtime.linux.docker.mount-volumes</name>
+		<value>true</value>
+	</property>
+
+<!-- Fim variáveis da documentação do Hadoop -->
+
+	<property>
+		<name>yarn.nodemanager.aux-services</name>
+		<value>spark_shuffle</value>
+	</property>
+	<property>
+		<name>yarn.nodemanager.aux-services.spark_shuffle.class</name>
+		<value>org.apache.spark.network.yarn.YarnShuffleService</value>
+	</property>
+    <property>
+	    <name>yarn.nodemanager.aux-services.spark_shuffle.classpath</name>
+	    <value>/opt/spark/yarn/*</value>
+    </property>
+	<property>
+		<name>yarn.resourcemanager.webapp.address</name>
+		<value>0.0.0.0:8088</value>
+	</property>		
+    <property>
+        <name>yarn.nodemanager.local-dirs</name>
+        <value>/tmp/dir</value>
+    </property> 
+	<property>
+	    <name>yarn.nodemanager.log-dirs</name>
+	    <value>/tmp/logs</value>
+    </property>  
+    <property>
+        <name>yarn.log.server.url</name>
+        <value>http://masternode:8188/applicationhistory</value>
+    </property>	
+
+	<property>
+		<name>yarn.nodemanager.webapp.address</name>
+		<value>0.0.0.0:8042</value>
+	</property> 
+	
+</configuration>
