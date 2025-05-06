@@ -78,5 +78,5 @@ As features ficarão na branch dev para avaliação por uma semana, serão mescl
 ---
 ### ❓ Dúvidas ou Ajuda?
 
-[Documentação gitflow Atlassiam](https://www.atlassian.com/br/git/tutorials/comparing-workflows/gitflow-workflow)
+[Documentação gitflow Atlassian](https://www.atlassian.com/br/git/tutorials/comparing-workflows/gitflow-workflow)
 

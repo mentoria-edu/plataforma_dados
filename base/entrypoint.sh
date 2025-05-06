@@ -104,7 +104,7 @@ elif [ "$CLIENT_NODE" == "true" ]; then
 Todos os arquivos de configurações estão presentes, \
 mas nada é inicializado" 
     
-    $SPARK_HOME/bin/spark-submit --master yarn $SPARK_CONF_DIR/hive_teste.py
+    $SPARK_HOME/bin/spark-submit --master yarn $SPARK_CONF_DIR/test_hive.py
 
 else
   echo "Valor inválido para CLIENT_NODE. Use 'true' ou 'false'."
