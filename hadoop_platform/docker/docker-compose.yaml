@@ -24,7 +24,7 @@ services:
    
   master_node:
     build:
-      context: ./base/.
+      context: ./src/.
       args:
         SPECIFIC_NODE: "master"
         CLIENT_NODE: "false"
@@ -66,7 +66,7 @@ services:
 
   worker_node:
     build:
-      context: ./base/.
+      context: ./src/.
       args:
         SPECIFIC_NODE: "worker"
         CLIENT_NODE: "false"   
@@ -98,7 +98,7 @@ services:
 
   client_node:
     build:
-      context: ./base/.
+      context: ./src/.
       args:
         SPECIFIC_NODE: "master"
         CLIENT_NODE: "true"
