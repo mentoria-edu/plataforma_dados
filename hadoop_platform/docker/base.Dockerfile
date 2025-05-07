@@ -7,7 +7,8 @@ ARG SPARK_VERSION="3.5.5"
 ARG JAR_POSTGRES_VERSION="42.7.5"
 ARG USER_HDFS="root"
 
-ARG PATH_HOST_CONFIG_FILES="./hadoop_platform/config"
+ARG PATH_HOST_CONFIG_SERVICES_FILES="./hadoop_platform/configs/services"
+ARG PATH_HOST_CONFIG_NODES_FILES="./hadoop_platform/configs/nodes"
 ARG PATH_HOST_TEST_FILES="./tests"
 
 ARG LINK_DOWNLOAD_HADOOP="https://dlcdn.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz"
@@ -16,6 +17,7 @@ ARG LINK_DOWNLOAD_HIVE="https://archive.apache.org/dist/hive/hive-${HIVE_VERSION
 ARG LINK_JAR_POSTGRES="https://repo1.maven.org/maven2/org/postgresql/postgresql/${JAR_POSTGRES_VERSION}/postgresql-${JAR_POSTGRES_VERSION}.jar"
 
 ENV CONFIGS="${BASE_DIR_PATH}/configs"
+ENV NODES_FILES="${BASE_DIR_PATH}/nodes_files"
 ENV TESTS="${BASE_DIR_PATH}/tests"
 
 ENV HADOOP_HOME="${BASE_DIR_PATH}/hadoop"
@@ -76,6 +78,7 @@ RUN mkdir -p ${HADOOP_HOME} && \
 
 RUN mkdir -p ${CONFIGS} && \
     mkdir -p ${TESTS} && \
+    mkdir -p ${NODES_FILES} && \
     mkdir -p ${HADOOP_HOME}/dfs/data && \
     mkdir -p ${HADOOP_HOME}/dfs/name && \  
     mkdir -p /tmp/logs && \
@@ -91,7 +94,8 @@ RUN ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa && \
     chmod 0600 ~/.ssh/authorized_keys && \
     service ssh start
 
-COPY ${PATH_HOST_CONFIG_FILES}/* ${CONFIGS}
+COPY ${PATH_HOST_CONFIG_SERVICES_FILES}/* ${CONFIGS}
+COPY ${PATH_HOST_CONFIG_NODES_FILES}/* ${NODES_FILES}
 COPY ${PATH_HOST_TEST_FILES}/* ${TESTS}
 
 RUN mv ${CONFIGS}/logs_yarn.sh ${HADOOP_BIN_DIR}/ && \
@@ -100,6 +104,3 @@ RUN mv ${CONFIGS}/logs_yarn.sh ${HADOOP_BIN_DIR}/ && \
     cp ${TESTS}/* ${SPARK_CONF_DIR}/ && \
     rm -r ${CONFIGS} && \
     rm -r ${TESTS}
-
-# COPY ./entrypoint.sh ${BASE_DIR_PATH}/entrypoint.sh
-# ENTRYPOINT ["bash", "-c", "bash /opt/entrypoint.sh"]
