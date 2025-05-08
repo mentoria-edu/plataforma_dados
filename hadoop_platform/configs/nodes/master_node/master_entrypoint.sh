@@ -50,9 +50,9 @@ if [ $attempt -lt $max_attempts ]; then
     hadoop fs -mkdir -p /spark_events_log
     
     echo "Iniciando Hive Metastore..."
-    hive --service metastore > /opt/hadoop/logs/metastore.log 2>&1 &
+    hive --service metastore > $HADOOP_HOME/logs/metastore.log 2>&1 &
     
-    if [ ! -f "/opt/hadoop/logs/metastore.log" ]; then
+    if [ ! -f " $HADOOP_HOME/logs/metastore.log" ]; then
     echo  "Hive Metastore inicializado com sucesso!"
     fi
 
