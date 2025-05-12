@@ -2,77 +2,77 @@
 set -e
 
 if [ ! -f $VERSION_HDFS ]; then
-    echo "Formatando o NameNode pela primeira vez..."
+    echo "Formatting NameNode for the first time..."
     hdfs namenode -format
 fi
 
-echo "Iniciando HDFS NameNode..."
+echo "Starting HDFS NameNode..."
 hdfs --daemon start namenode
 
-echo "Aguardando NameNode iniciar..."
+echo "Waiting for NameNode to start..."
 sleep 5 
 if ! pgrep -f "proc_namenode" > /dev/null; then
-    echo "ERRO: NameNode não iniciou corretamente!"
-    echo "--- Últimas 20 linhas do log do NameNode ---"
+    echo "ERROR: NameNode did not start correctly!"
+    echo "--- Last 20 lines of NameNode log ---"
     tail -20 /opt/hadoop/logs/hadoop-*-namenode-*.log
     exit 1
 fi
 
-echo "Verificando porta 9000..."
+echo "Checking port 9000..."
 sleep 5
 
 if ! netstat -tlnp | grep -q ":9000"; then
-    echo "ERRO: NameNode não está escutando na porta 9000!"
-    echo "--- Status das portas ---"
+    echo "ERROR: NameNode is not listening on port 9000!"
+    echo "--- Port status ---"
     netstat -tlnp
     exit 1
 fi
 
-echo "Aguardando o HDFS sair do modo seguro..."
+echo "Waiting for HDFS to exit safe mode..."
 attempt=0
 max_attempts=30
 while [ $attempt -lt $max_attempts ]; do
     if hdfs dfsadmin -safemode get | grep -q "Safe mode is OFF"; then
-    echo "HDFS saiu do modo seguro!"
+    echo "HDFS exited safe mode!"
     break
     fi
     attempt=$((attempt + 1))
-    echo "Tentativa $attempt/$max_attempts - HDFS ainda em modo seguro..."
+    echo "Attempt $attempt/$max_attempts - HDFS still in safe mode..."
     sleep 5
     hdfs dfsadmin -safemode leave
 done
 
 if [ $attempt -lt $max_attempts ]; then
-    echo "Criando diretórios no HDFS..."
+    echo "Creating directories in HDFS..."
     hadoop fs -mkdir -p /spark_events 
     hadoop fs -mkdir -p /lakehouse
     hadoop fs -mkdir -p /yarn_logs
     hadoop fs -mkdir -p /spark_events_log
     
-    echo "Iniciando Hive Metastore..."
+    echo "Starting Hive Metastore..."
     hive --service metastore > $HADOOP_HOME/logs/metastore.log 2>&1 &
     
     if [ ! -f " $HADOOP_HOME/logs/metastore.log" ]; then
-    echo  "Hive Metastore inicializado com sucesso!"
+    echo  "Hive Metastore initialized successfully!"
     fi
 
-echo "Configurando Hive Metastore..."
+echo "Configuring Hive Metastore..."
 schematool -dbType postgres -info || schematool -dbType postgres -initSchema
-echo "Esperando o metastore subir..."
+echo "Waiting for metastore to start..."
 
 until hive -e "SHOW DATABASES;" &> /dev/null; do
     sleep 2
 done
 
-echo  "Criando Schema bronze no metastore"
+echo  "Creating bronze schema in metastore"
 hive -e "CREATE SCHEMA IF NOT EXISTS bronze;"
-echo "Ambiente Hadoop inicializado com sucesso!"
+echo "Hadoop environment initialized successfully!"
 
-echo "Iniciando YARN ResourceManager..."
+echo "Starting YARN ResourceManager..."
 yarn --daemon start resourcemanager
     
 else
-    echo "ERRO: HDFS não saiu do modo seguro após várias tentativas!"
+    echo "ERROR: HDFS did not exit safe mode after several attempts!"
     exit 1
 fi
 

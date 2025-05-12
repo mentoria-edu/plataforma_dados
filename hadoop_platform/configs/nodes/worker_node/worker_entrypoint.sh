@@ -1,14 +1,13 @@
 #!/bin/bash
 set -e
 
-echo "Iniciando HDFS datanode..."
+echo "Starting HDFS Datanode..."
 hdfs --daemon start datanode 
 
-echo "Iniciando YARN nodemanager..."
+echo "Starting YARN Nodemanager..."
 yarn --daemon start nodemanager
 
-echo "Inicializando os logs do sistema.."
+echo "Initializing the system logs..."
 bash logs_yarn.sh > $HADOOP_HOME/logs/logs_yarn.log 2>&1 &
-echo "passou"
 
 tail -f /dev/null

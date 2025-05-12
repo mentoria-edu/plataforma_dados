@@ -8,8 +8,7 @@ services:
     image: postgres:17.4
     container_name: postgres
     environment:
-      <<: *common-env
-      POSTGRES_PASSWORD: 1234        
+      <<: *common-env     
     ports:
       - "5432:5432"
     healthcheck:
@@ -92,6 +91,7 @@ services:
       <<: *common-env
       SPECIFIC_NODE: "master"
       CLIENT_NODE: "true"
+    entrypoint: ["bash", "-c", "bash /opt/spark/bin/spark-submit /opt/spark/conf/test_hive.py"] 
     container_name: client_node
     ports:
       - "9090:9090"
