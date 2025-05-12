@@ -27,8 +27,11 @@ if [ ! -f "$COMPOSE_PATH" ]; then
   exit 1
 fi
 
+export HADOOP_PLATFORM_UID=$(id -u)
+export HADOOP_PLATFORM_GID=$(id -g)
+
 echo "Building the Hadoop base image..."
 docker build -f "$DOCKERFILE_PATH" -t "hadoop_platform" "$SCRIPT_DIR"
 
 echo "Starting services with Docker Compose..."
-docker compose -f "$COMPOSE_PATH" up --build
+docker compose -f "$COMPOSE_PATH" up --build 

@@ -1,14 +1,7 @@
-x-common-env: &common-env
-  UID: $UID
-  GID: $GID
-  LOG_SCRIPT_DIR: $LOG_SCRIPT_DIR
-
 services:
   postgres:
     image: postgres:17.4
-    container_name: postgres
-    environment:
-      <<: *common-env     
+    container_name: postgres       
     ports:
       - "5432:5432"
     healthcheck:
@@ -23,9 +16,7 @@ services:
    
   master_node:
     image: hadoop_platform
-    entrypoint: ["bash", "-c", "bash /opt/nodes_files/master_entrypoint.sh"]
-    environment:
-      <<: *common-env
+    entrypoint: ["bash", "-c", "bash /opt/nodes_files/master_entrypoint.sh"]    
     volumes:
       - namenode_plataforma_dados:/opt/hadoop/dfs/name
     container_name: masternode
@@ -62,7 +53,8 @@ services:
     image: hadoop_platform  
     entrypoint: ["bash", "-c", "bash /opt/nodes_files/worker_entrypoint.sh"] 
     environment:
-      <<: *common-env 
+      - HADOOP_PLATFORM_UID=${HADOOP_PLATFORM_UID}
+      - HADOOP_PLATFORM_GID=${HADOOP_PLATFORM_GID}      
     container_name: workernode      
     ports:
       - "9864:9864"
@@ -86,11 +78,7 @@ services:
         ipv4_address: 172.20.0.4
 
   client_node:
-    image: hadoop_platform 
-    environment:
-      <<: *common-env
-      SPECIFIC_NODE: "master"
-      CLIENT_NODE: "true"
+    image: hadoop_platform     
     entrypoint: ["bash", "-c", "bash /opt/spark/bin/spark-submit /opt/spark/conf/test_hive.py"] 
     container_name: client_node
     ports:

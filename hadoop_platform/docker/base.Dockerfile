@@ -27,6 +27,7 @@ ENV HIVE_HOME="${BASE_DIR_PATH}/hive"
 ENV HADOOP_CONF_DIR="${BASE_DIR_PATH}/hadoop/etc/hadoop"
 ENV HADOOP_BIN_DIR="${HADOOP_HOME}/bin"
 ENV YARN_CONF_DIR="${HADOOP_CONF_DIR}"
+ENV LOG_SCRIPT_DIR="/tmp/logs"
 
 ENV SPARK_CONF_DIR="${SPARK_HOME}/conf"
 ENV SPARK_SBIN_DIR="${SPARK_HOME}/sbin"
@@ -81,7 +82,7 @@ RUN mkdir -p ${CONFIGS} && \
     mkdir -p ${NODES_FILES} && \
     mkdir -p ${HADOOP_HOME}/dfs/data && \
     mkdir -p ${HADOOP_HOME}/dfs/name && \  
-    mkdir -p /tmp/logs && \
+    mkdir -p ${LOG_SCRIPT_DIR} && \
     mkdir -p /tmp/dir && \
     mkdir -p /tmp/spark && \
     mkdir -p ${HADOOP_HOME}/logs
