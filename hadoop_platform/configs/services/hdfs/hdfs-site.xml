@@ -18,7 +18,7 @@
     </property>
     <property>
         <name>dfs.namenode.rpc-address</name>
-        <value>master_node:9000</value>
+        <value>masternode:9000</value>
     </property>
     <property>
         <name>dfs.webhdfs.enabled</name>

@@ -27,8 +27,8 @@ services:
     entrypoint: ["bash", "-c", "bash /opt/nodes_files/master_entrypoint.sh"]    
     volumes:
       - namenode_hadoop_platform:/opt/hadoop/dfs/name
-    container_name: master_node
-    hostname: master_node
+    container_name: masternode
+    hostname: masternode
     ports:
       - "8020:8020"
       - "8030:8030"
@@ -62,7 +62,7 @@ services:
     entrypoint: ["bash", "-c", "bash /opt/nodes_files/worker_entrypoint.sh"] 
     environment:
       <<: *common-env   
-    container_name: workernode      
+    container_name: worker_node      
     ports:
       - "9864:9864"
       - "8042:8042"

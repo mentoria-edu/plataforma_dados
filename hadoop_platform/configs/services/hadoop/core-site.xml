@@ -2,6 +2,6 @@
 <configuration>
     <property>
         <name>fs.defaultFS</name>
-        <value>hdfs://master_node:9000</value>   
+        <value>hdfs://masternode:9000</value>   
     </property>
 </configuration>

@@ -14,7 +14,7 @@ sleep 5
 if ! pgrep -f "proc_namenode" > /dev/null; then
     echo "ERROR: NameNode did not start correctly!"
     echo "--- Last 20 lines of NameNode log ---"
-    tail -20 /opt/hadoop/logs/hadoop-*-namenode-*.log
+    tail -20 $HADOOP_HOME/logs/hadoop-*-namenode-*.log
     exit 1
 fi
 
