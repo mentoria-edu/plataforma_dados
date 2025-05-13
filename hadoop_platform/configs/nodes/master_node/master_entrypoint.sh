@@ -30,7 +30,7 @@ fi
 
 echo "Waiting for HDFS to exit safe mode..."
 attempt=0
-max_attempts=30
+max_attempts=5
 while [ $attempt -lt $max_attempts ]; do
     if hdfs dfsadmin -safemode get | grep -q "Safe mode is OFF"; then
     echo "HDFS exited safe mode!"
@@ -65,7 +65,7 @@ until hive -e "SHOW DATABASES;" &> /dev/null; do
 done
 
 echo  "Creating bronze schema in metastore"
-hive -e "CREATE SCHEMA IF NOT EXISTS bronze;"
+hive -e "CREATE SCHEMA IF NOT EXISTS BRONZE;"
 echo "Hadoop environment initialized successfully!"
 
 echo "Starting YARN ResourceManager..."
