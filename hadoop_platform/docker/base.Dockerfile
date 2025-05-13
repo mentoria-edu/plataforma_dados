@@ -16,6 +16,8 @@ ARG LINK_DOWNLOAD_SPARK="https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/s
 ARG LINK_DOWNLOAD_HIVE="https://archive.apache.org/dist/hive/hive-${HIVE_VERSION}/apache-hive-${HIVE_VERSION}-bin.tar.gz"
 ARG LINK_JAR_POSTGRES="https://repo1.maven.org/maven2/org/postgresql/postgresql/${JAR_POSTGRES_VERSION}/postgresql-${JAR_POSTGRES_VERSION}.jar"
 
+ENV PATH_NODE_FILES="/opt/nodes_files"
+
 ENV CONFIGS="${BASE_DIR_PATH}/configs"
 ENV NODES_FILES="${BASE_DIR_PATH}/nodes_files"
 ENV TESTS="${BASE_DIR_PATH}/tests"

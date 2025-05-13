@@ -1,6 +1,12 @@
+x-common-env: &common-env
+  NODES_FILES: "/opt/nodes_files"
+  HADOOP_PLATFORM_UID: ${HADOOP_PLATFORM_UID}
+  HADOOP_PLATFORM_GID: ${HADOOP_PLATFORM_GID}   
 services:
   postgres:
     image: postgres:17.4
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     container_name: postgres       
     ports:
       - "5432:5432"
@@ -16,11 +22,13 @@ services:
    
   master_node:
     image: hadoop_platform
+    environment:
+      <<: *common-env
     entrypoint: ["bash", "-c", "bash /opt/nodes_files/master_entrypoint.sh"]    
     volumes:
-      - namenode_plataforma_dados:/opt/hadoop/dfs/name
-    container_name: masternode
-    hostname: masternode
+      - namenode_hadoop_platform:/opt/hadoop/dfs/name
+    container_name: master_node
+    hostname: master_node
     ports:
       - "8020:8020"
       - "8030:8030"
@@ -43,25 +51,24 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
-    extra_hosts:
-      - "masternode:172.20.0.3"
+    # extra_hosts:
+    #   - "master_node:172.20.0.3"
     networks:
       hadoop_network:
         ipv4_address: 172.20.0.3
 
   worker_node:
-    image: hadoop_platform  
+    image: hadoop_platform
     entrypoint: ["bash", "-c", "bash /opt/nodes_files/worker_entrypoint.sh"] 
     environment:
-      - HADOOP_PLATFORM_UID=${HADOOP_PLATFORM_UID}
-      - HADOOP_PLATFORM_GID=${HADOOP_PLATFORM_GID}      
+      <<: *common-env   
     container_name: workernode      
     ports:
       - "9864:9864"
       - "8042:8042"
     volumes:
       - ./logs:/tmp/logs
-      - datanode_plataforma_dados:/opt/hadoop/dfs/data
+      - datanode_hadoop_platform:/opt/hadoop/dfs/data
     healthcheck:
       test: ["CMD", "bash", "-c", "netstat -tulpn | grep -q ':9864' && netstat -tulpn | grep -q ':8042'"]
       interval: 10s
@@ -71,8 +78,8 @@ services:
     depends_on:
       master_node:
         condition: service_healthy
-    extra_hosts:
-      - "masternode:172.20.0.3"
+    # extra_hosts:
+    #   - "master_node:172.20.0.3"
     networks:
       hadoop_network:
         ipv4_address: 172.20.0.4
@@ -89,8 +96,8 @@ services:
         condition: service_healthy
       worker_node:
         condition: service_healthy
-    extra_hosts:
-      - "masternode:172.20.0.3"
+    # extra_hosts:
+    #   - "master_node:172.20.0.3"
     networks:
       hadoop_network:
         ipv4_address: 172.20.0.5
@@ -104,5 +111,5 @@ networks:
         - subnet: 172.20.0.0/16
           gateway: 172.20.0.1
 volumes:
-  namenode_plataforma_dados:
-  datanode_plataforma_dados:
+  namenode_hadoop_platform:
+  datanode_hadoop_platform:
