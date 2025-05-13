@@ -1,7 +1,7 @@
 <configuration>          
 	<property>
-		<name>yarn.resourcemanager.hostname</name>
-		<value>master_node</value>
+	    <name>yarn.resourcemanager.hostname</name>
+		<value>masternode</value>
 	</property>
     <property>
         <name>yarn.resourcemanager.address</name>
