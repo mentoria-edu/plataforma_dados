@@ -2,6 +2,9 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+# CONFIG_SERVICES_DIR="$SCRIPT_DIR/configs/services"
+# CONFIG_NODES_DIR="$SCRIPT_DIR/configs/nodes"
+# TESTS_DIR="$SCRIPT_DIR/tests"
 
 echo "Checking Docker and docker-compose installation"
 if ! command -v docker &>/dev/null; then
@@ -31,7 +34,7 @@ export HADOOP_PLATFORM_UID=$(id -u)
 export HADOOP_PLATFORM_GID=$(id -g)
 
 echo "Building the Hadoop base image..."
-docker build -f "$DOCKERFILE_PATH" -t "hadoop_platform" "$SCRIPT_DIR"
+docker build -f "$DOCKERFILE_PATH" --build-arg PATH_HOST_BASE_DIR=$SCRIPT_DIR -t "hadoop_platform" "$SCRIPT_DIR"
 
 echo "Starting services with Docker Compose..."
 docker compose -f "$COMPOSE_PATH" up --build 

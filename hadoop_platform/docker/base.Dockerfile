@@ -7,9 +7,10 @@ ARG SPARK_VERSION="3.5.5"
 ARG JAR_POSTGRES_VERSION="42.7.5"
 ARG USER_HDFS="root"
 
-ARG PATH_HOST_CONFIG_SERVICES_FILES="./hadoop_platform/configs/services"
-ARG PATH_HOST_CONFIG_NODES_FILES="./hadoop_platform/configs/nodes"
-ARG PATH_HOST_TEST_FILES="./tests"
+ARG PATH_HOST_BASE_DIR
+ARG PATH_HOST_CONFIG_SERVICES_FILES="/hadoop_platform/configs/services"
+ARG PATH_HOST_CONFIG_NODES_FILES="/hadoop_platform/configs/nodes"
+ARG PATH_HOST_TEST_FILES="/tests"
 
 ARG LINK_DOWNLOAD_HADOOP="https://dlcdn.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz"
 ARG LINK_DOWNLOAD_SPARK="https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz"
