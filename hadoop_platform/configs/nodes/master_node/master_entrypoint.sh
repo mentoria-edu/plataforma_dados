@@ -60,7 +60,6 @@ if [ $attempt -lt $max_attempts ]; then
     echo  "Hive Metastore initialized successfully!"
     fi
 
-
 until hive -e "SHOW DATABASES;"; do
     sleep 2
 done
@@ -71,10 +70,5 @@ echo "Hadoop environment initialized successfully!"
 
 echo "Starting YARN ResourceManager..."
 yarn --daemon start resourcemanager
-    
-else
-    echo "ERROR: HDFS did not exit safe mode after several attempts!"
-    exit 1
-fi
 
 tail -f /dev/null
