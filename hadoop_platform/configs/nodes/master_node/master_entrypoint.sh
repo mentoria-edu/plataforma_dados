@@ -65,9 +65,6 @@ until hive -e "SHOW DATABASES;"; do
     sleep 2
 done
 
-# hive -e "SHOW DATABASES;"
-# sleep 2
-
 echo  "Creating bronze schema in metastore"
 hive -e "CREATE SCHEMA IF NOT EXISTS BRONZE;"
 echo "Hadoop environment initialized successfully!"

@@ -50,9 +50,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
-      start_period: 60s
-    # extra_hosts:
-    #   - "master_node:172.20.0.3"
+      start_period: 60s   
     networks:
       hadoop_network:
         ipv4_address: 172.20.0.3
@@ -77,9 +75,7 @@ services:
       start_period: 30s
     depends_on:
       master_node:
-        condition: service_healthy
-    # extra_hosts:
-    #   - "master_node:172.20.0.3"
+        condition: service_healthy 
     networks:
       hadoop_network:
         ipv4_address: 172.20.0.4
@@ -95,9 +91,7 @@ services:
       master_node:
         condition: service_healthy
       worker_node:
-        condition: service_healthy
-    # extra_hosts:
-    #   - "master_node:172.20.0.3"
+        condition: service_healthy  
     networks:
       hadoop_network:
         ipv4_address: 172.20.0.5
