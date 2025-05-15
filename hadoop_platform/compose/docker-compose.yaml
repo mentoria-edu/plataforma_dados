@@ -1,12 +1,12 @@
 x-common-env: &common-env
   NODES_FILES: "/opt/nodes_files"
   HADOOP_PLATFORM_UID: ${HADOOP_PLATFORM_UID}
-  HADOOP_PLATFORM_GID: ${HADOOP_PLATFORM_GID}   
+  HADOOP_PLATFORM_GID: ${HADOOP_PLATFORM_GID} 
 services:
   postgres:
     image: postgres:17.4
     environment:
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PASSWORD=1234
     container_name: postgres       
     ports:
       - "5432:5432"

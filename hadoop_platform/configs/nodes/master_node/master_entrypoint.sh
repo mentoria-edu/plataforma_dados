@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-if [ ! -f $VERSION_HDFS ]; then
+if [ ! -f $HDFS_VERSION ]; then
     echo "Formatting NameNode for the first time..."
     hdfs namenode -format
 fi
@@ -49,6 +49,10 @@ if [ $attempt -lt $max_attempts ]; then
     hadoop fs -mkdir -p /yarn_logs
     hadoop fs -mkdir -p /spark_events_log
     
+    echo "Configuring Hive Metastore..."
+    schematool -dbType postgres -info || schematool -dbType postgres -initSchema
+    echo "Waiting for metastore to start..."
+
     echo "Starting Hive Metastore..."
     hive --service metastore > $HADOOP_HOME/logs/metastore.log 2>&1 &
     
@@ -56,13 +60,13 @@ if [ $attempt -lt $max_attempts ]; then
     echo  "Hive Metastore initialized successfully!"
     fi
 
-echo "Configuring Hive Metastore..."
-schematool -dbType postgres -info || schematool -dbType postgres -initSchema
-echo "Waiting for metastore to start..."
 
-until hive -e "SHOW DATABASES;" &> /dev/null; do
+until hive -e "SHOW DATABASES;"; do
     sleep 2
 done
+
+# hive -e "SHOW DATABASES;"
+# sleep 2
 
 echo  "Creating bronze schema in metastore"
 hive -e "CREATE SCHEMA IF NOT EXISTS BRONZE;"
