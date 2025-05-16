@@ -34,4 +34,4 @@ echo "Building the Hadoop base image..."
 docker build -f "$DOCKERFILE_PATH" --build-arg -t "hadoop_platform" "$SCRIPT_DIR"
 
 echo "Starting services with Docker Compose..."
-docker compose -f "$COMPOSE_PATH" up --build 
+docker compose -f "$COMPOSE_PATH" up --build
