@@ -31,7 +31,7 @@ export HADOOP_PLATFORM_UID=$(id -u)
 export HADOOP_PLATFORM_GID=$(id -g)
 
 echo "Building the Hadoop base image..."
-docker build -f "$DOCKERFILE_PATH" --build-arg -t "hadoop_platform" "$SCRIPT_DIR"
+docker build -f "$DOCKERFILE_PATH" -t "hadoop_platform" "$SCRIPT_DIR"
 
 echo "Starting services with Docker Compose..."
 docker compose -f "$COMPOSE_PATH" up --build
