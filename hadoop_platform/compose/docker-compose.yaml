@@ -1,0 +1,109 @@
+x-common-env: &common-env
+  NODES_FILES: "/opt/nodes_files"
+  HADOOP_PLATFORM_UID: ${HADOOP_PLATFORM_UID}
+  HADOOP_PLATFORM_GID: ${HADOOP_PLATFORM_GID} 
+services:
+  postgres:
+    image: postgres:17.4
+    environment:
+      - POSTGRES_PASSWORD=1234
+    container_name: postgres       
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      hadoop_network:
+        ipv4_address: 172.20.0.2
+   
+  master_node:
+    image: hadoop_platform
+    environment:
+      <<: *common-env
+    entrypoint: ["bash", "-c", "bash /opt/nodes_files/master_entrypoint.sh"]    
+    volumes:
+      - namenode_hadoop_platform:/opt/hadoop/dfs/name
+    container_name: masternode
+    hostname: masternode
+    ports:
+      - "8020:8020"
+      - "8030:8030"
+      - "8031:8031"    
+      - "8032:8032"
+      - "8033:8033"
+      - "8088:8088"
+      - "9000:9000"
+      - "9083:9083"
+      - "9866:9866"      
+      - "9868:9868"
+      - "9870:9870"
+      - "10000:10000"  
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "netstat -tulpn | grep -q ':9000' && netstat -tulpn | grep -q ':8088' && netstat -tulpn | grep -q ':8032' && pgrep -f metastore"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 60s   
+    networks:
+      hadoop_network:
+        ipv4_address: 172.20.0.3
+
+  worker_node:
+    image: hadoop_platform
+    entrypoint: ["bash", "-c", "bash /opt/nodes_files/worker_entrypoint.sh"] 
+    environment:
+      <<: *common-env   
+    container_name: worker_node      
+    ports:
+      - "9864:9864"
+      - "8042:8042"
+    volumes:
+      - ./logs:/tmp/logs
+      - datanode_hadoop_platform:/opt/hadoop/dfs/data
+    healthcheck:
+      test: ["CMD", "bash", "-c", "netstat -tulpn | grep -q ':9864' && netstat -tulpn | grep -q ':8042'"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      master_node:
+        condition: service_healthy 
+    networks:
+      hadoop_network:
+        ipv4_address: 172.20.0.4
+
+  client_node:
+    image: hadoop_platform     
+    entrypoint: ["bash", "-c", "bash /opt/spark/bin/spark-submit /opt/spark/conf/test_hive.py"] 
+    container_name: client_node
+    ports:
+      - "9090:9090"
+      - "9091:9091"
+    depends_on:
+      master_node:
+        condition: service_healthy
+      worker_node:
+        condition: service_healthy  
+    networks:
+      hadoop_network:
+        ipv4_address: 172.20.0.5
+
+networks:
+  hadoop_network:
+    name: hadoop_network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+volumes:
+  namenode_hadoop_platform:
+  datanode_hadoop_platform:
