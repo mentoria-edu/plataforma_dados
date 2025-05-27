@@ -59,6 +59,7 @@ if [ $attempt -lt $max_attempts ]; then
     if [ ! -f " $HADOOP_HOME/logs/metastore.log" ]; then
     echo  "Hive Metastore initialized successfully!"
     fi
+fi
 
 until hive -e "SHOW DATABASES;"; do
     sleep 2
