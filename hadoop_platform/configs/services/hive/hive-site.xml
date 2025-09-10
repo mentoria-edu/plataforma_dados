@@ -25,13 +25,9 @@
         <name>hive.metastore.uris</name>
         <value>thrift://masternode:9083</value>
     </property> 
-    <property>
-        <name>datanucleus.autoStartMechanism</name>
-        <value>SchemaTable</value>
-    </property> 
 	<property>
 	    <name>datanucleus.schema.autoCreateAll</name>
-	    <value>true</value>        
+	    <value>false</value>        
     </property>
     <property>
         <name>hive.metastore.schema.verification</name>

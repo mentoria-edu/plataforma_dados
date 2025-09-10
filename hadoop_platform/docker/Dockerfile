@@ -1,10 +1,15 @@
 FROM eclipse-temurin:8-jdk-jammy
 
 ARG BASE_DIR_PATH="/opt"
-ARG HADOOP_VERSION="3.3.6"
-ARG HIVE_VERSION="3.1.3"
-ARG SPARK_VERSION="3.5.5"
-ARG JAR_POSTGRES_VERSION="42.7.5"
+
+ARG HADOOP_VERSION="3.4.1"
+ARG SPARK_VERSION="3.5.6"
+ARG HIVE_VERSION="3.1.2"
+ARG POSTGRES_JAR_VERSION="42.7.7"
+ARG HUDI_SPARK_VERSION="3.5"
+ARG HUDI_VERSION="1.0.2"
+ARG SCALA_VERSION="2.12"
+
 ARG USER_HDFS="root"
 
 ARG PATH_HOST_BASE_DIR
@@ -12,16 +17,19 @@ ARG PATH_HOST_CONFIG_SERVICES_FILES="/hadoop_platform/configs/services"
 ARG PATH_HOST_CONFIG_NODES_FILES="/hadoop_platform/configs/nodes"
 ARG PATH_HOST_TEST_FILES="/tests"
 
-ARG LINK_DOWNLOAD_HADOOP="https://dlcdn.apache.org/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz"
+ARG LINK_DOWNLOAD_HADOOP="https://archive.apache.org/dist/hadoop/common/hadoop-${HADOOP_VERSION}/hadoop-${HADOOP_VERSION}.tar.gz"
 ARG LINK_DOWNLOAD_SPARK="https://dlcdn.apache.org/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop3.tgz"
 ARG LINK_DOWNLOAD_HIVE="https://archive.apache.org/dist/hive/hive-${HIVE_VERSION}/apache-hive-${HIVE_VERSION}-bin.tar.gz"
-ARG LINK_JAR_POSTGRES="https://repo1.maven.org/maven2/org/postgresql/postgresql/${JAR_POSTGRES_VERSION}/postgresql-${JAR_POSTGRES_VERSION}.jar"
+ARG LINK_DOWNLOAD_POSTGRES_JAR="https://repo1.maven.org/maven2/org/postgresql/postgresql/${POSTGRES_JAR_VERSION}/postgresql-${POSTGRES_JAR_VERSION}.jar"
+ARG LINK_DOWNLOAD_HIVE_SPARK_JAR="https://repo1.maven.org/maven2/org/apache/spark/spark-hive_${SCALA_VERSION}/${SPARK_VERSION}/spark-hive_${SCALA_VERSION}-${SPARK_VERSION}.jar"
+ARG LINK_DOWNLOAD_HUDI_SPARK_JAR="https://repo1.maven.org/maven2/org/apache/hudi/hudi-spark${HUDI_SPARK_VERSION}-bundle_${SCALA_VERSION}/${HUDI_VERSION}/hudi-spark${HUDI_SPARK_VERSION}-bundle_${SCALA_VERSION}-${HUDI_VERSION}.jar"
 
 ENV PATH_NODE_FILES="/opt/nodes_files"
 
 ENV CONFIGS="${BASE_DIR_PATH}/configs"
 ENV NODES_FILES="${BASE_DIR_PATH}/nodes_files"
 ENV TESTS="${BASE_DIR_PATH}/tests"
+ENV SCRIPTS="${BASE_DIR_PATH}/scripts"
 
 ENV HADOOP_HOME="${BASE_DIR_PATH}/hadoop"
 ENV SPARK_HOME="${BASE_DIR_PATH}/spark"
@@ -35,6 +43,7 @@ ENV LOG_SCRIPT_DIR="/tmp/logs"
 ENV SPARK_CONF_DIR="${SPARK_HOME}/conf"
 ENV SPARK_SBIN_DIR="${SPARK_HOME}/sbin"
 ENV SPARK_BIN_DIR="${SPARK_HOME}/bin"
+ENV SPARK_SUBMIT="${SPARK_BIN_DIR}/spark-submit"
 ENV SPARK_PYTHON_EXAMPLES="${SPARK_HOME}/examples/src/main/python"
 ENV SPARK_EVENTS_DIR="${SPARK_HOME}/spark-events"
 
@@ -50,8 +59,8 @@ ENV HIVE_TAR_GZ_FILE="${HIVE_HOME}/apache-hive-${HIVE_VERSION}-bin.tar.gz"
 ENV PATH=$PATH:"$HIVE_HOME/bin"
 ENV PATH=$PATH:"$HADOOP_HOME/bin:$HADOOP_HOME/sbin"
 
-RUN apt update && \ 
-    apt install -y --no-install-recommends \  
+RUN apt update && \
+    apt install -y --no-install-recommends \
     wget \    
     openssh-client \
     openssh-server \
@@ -63,7 +72,7 @@ RUN apt update && \
     krb5-user \
     libnss3  \
     net-tools \
-    inotify-tools    
+    inotify-tools
 
 RUN mkdir -p ${HADOOP_HOME} && \
     mkdir -p ${SPARK_HOME} && \
@@ -71,11 +80,15 @@ RUN mkdir -p ${HADOOP_HOME} && \
     wget ${LINK_DOWNLOAD_HADOOP} -O ${HADOOP_TAR_GZ_FILE} && \
     wget ${LINK_DOWNLOAD_SPARK} -O ${SPARK_TAR_GZ_FILE} && \
     wget ${LINK_DOWNLOAD_HIVE} -O ${HIVE_TAR_GZ_FILE} && \
-    wget ${LINK_JAR_POSTGRES} && \
+    wget ${LINK_DOWNLOAD_POSTGRES_JAR} && \
+    wget ${LINK_DOWNLOAD_HIVE_SPARK_JAR} && \
+    wget ${LINK_DOWNLOAD_HUDI_SPARK_JAR} && \
     tar -xvzf ${HADOOP_TAR_GZ_FILE} -C ${HADOOP_HOME} --strip-components=1 &&\
     tar -xvzf ${SPARK_TAR_GZ_FILE} -C ${SPARK_HOME} --strip-components=1 && \
     tar -xvzf ${HIVE_TAR_GZ_FILE} -C ${HIVE_HOME} --strip-components=1 && \
-    mv postgresql-${JAR_POSTGRES_VERSION}.jar ${HIVE_HOME}/lib && \ 
+    mv postgresql-${POSTGRES_JAR_VERSION}.jar ${HIVE_HOME}/lib && \
+    mv hudi-spark${HUDI_SPARK_VERSION}-bundle_${SCALA_VERSION}-${HUDI_VERSION}.jar ${SPARK_HOME}/jars && \
+    mv spark-hive_${SCALA_VERSION}-${SPARK_VERSION}.jar ${SPARK_HOME}/jars && \
     rm ${HADOOP_TAR_GZ_FILE} && \
     rm ${SPARK_TAR_GZ_FILE} && \
     rm ${HIVE_TAR_GZ_FILE}
