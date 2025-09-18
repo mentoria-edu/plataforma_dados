@@ -24,12 +24,13 @@ services:
     image: spark_hudi
     environment:
       <<: *common-env
-    entrypoint: ["bash", "-c", "\
-                  bash /opt/nodes_files/start_hdfs.sh && \
-                  bash /opt/nodes_files/start_hive.sh && \
-                  bash /opt/nodes_files/start_yarn.sh && \
-                  tail -f /dev/null\
-                "]    
+    entrypoint: [
+      "bash", "-c",
+      "bash /opt/nodes_files/start_hdfs.sh &&
+       bash /opt/nodes_files/start_hive.sh &&
+       bash /opt/nodes_files/start_yarn.sh &&
+       tail -f /dev/null"
+    ]
     volumes:
       - namenode_hadoop_platform:/opt/hadoop/dfs/name
     container_name: masternode
