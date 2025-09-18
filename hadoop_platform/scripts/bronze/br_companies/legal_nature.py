@@ -1,32 +1,32 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, current_timestamp
-from pyspark.sql.types import StringType, TimestampType
+from pyspark.sql.functions import col
+from pyspark.sql.types import StringType
 
-PATH_CSV_FILE = "/raw/br_companies/legal_nature.csv"
+PATH_CSV_FILE = "/data_bureau/raw/br_companies/legal_nature.csv"
 DATABASE_NAME = "bronze"
 SCHEMA_NAME = "br_companies"
 TABLE_NAME = "legal_nature"
 
-spark = SparkSession.builder.appName(f"{TABLE_NAME}_{DATABASE_NAME}").getOrCreate()
+spark = SparkSession.builder.appName(f"{DATABASE_NAME}_{TABLE_NAME}").getOrCreate()
 
-df = spark.read.csv(
-    PATH_CSV_FILE,
-    sep=";",
-    header=False,
-    inferSchema=False
-)
+df = spark.read.format("csv") \
+    .options(
+        sep=";",
+        header="false", 
+        inferSchema="false",
+        encoding="UTF-8",
+        multiline="true",
+    ) \
+    .load(PATH_CSV_FILE)
 
 df = df.withColumnsRenamed({
     "_c0": "id_legal_nature",
     "_c1": "description",
 })
 
-df = df.withColumn("created_at", current_timestamp())
-
 df = df \
     .withColumn("id_legal_nature", col("id_legal_nature").cast(StringType())) \
-    .withColumn("description", col("description").cast(StringType())) \
-    .withColumn("created_at", col("created_at").cast(TimestampType()))
+    .withColumn("description", col("description").cast(StringType())) 
 
 hudi_options = {
     "hoodie.table.name": TABLE_NAME,
@@ -35,8 +35,6 @@ hudi_options = {
     "hoodie.clustering.plan.strategy.sort.columns": "id_legal_nature",
     "hoodie.datasource.write.table.type": "COPY_ON_WRITE",
 }
-
-spark.sql(f"CREATE DATABASE IF NOT EXISTS {DATABASE_NAME}")
 
 df.write.format("hudi") \
     .mode("append") \

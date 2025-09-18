@@ -6,7 +6,7 @@ DATABASE_NAME = "silver"
 SCHEMA_NAME = "br_companies"
 TABLE_NAME = "companies"
 
-spark = SparkSession.builder.appName(f"{TABLE_NAME}_{DATABASE_NAME}").getOrCreate()
+spark = SparkSession.builder.appName(f"{DATABASE_NAME}_{TABLE_NAME}").getOrCreate()
 
 df = spark.read.table(TABLE_NAME_BRONZE)
 
@@ -22,8 +22,6 @@ hudi_options = {
     "hoodie.clustering.plan.strategy.sort.columns": "cnpj",
     "hoodie.datasource.write.table.type": "COPY_ON_WRITE",
 }
-
-spark.sql(f"CREATE DATABASE IF NOT EXISTS {DATABASE_NAME}")
 
 df.write.format("hudi") \
     .mode("overwrite") \

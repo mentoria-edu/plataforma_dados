@@ -1,20 +1,23 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, current_timestamp
-from pyspark.sql.types import StringType, DoubleType, TimestampType
+from pyspark.sql.functions import col
+from pyspark.sql.types import StringType, DoubleType
 
-PATH_CSV_FILE = "/raw/br_companies/companies.csv"
+PATH_CSV_FILE = "/data_bureau/raw/br_companies/companies.csv"
 DATABASE_NAME = "bronze"
 SCHEMA_NAME = "br_companies"
 TABLE_NAME = "companies"
 
-spark = SparkSession.builder.appName(f"{TABLE_NAME}_{DATABASE_NAME}").getOrCreate()
+spark = SparkSession.builder.appName(f"{DATABASE_NAME}_{TABLE_NAME}").getOrCreate()
 
-df = spark.read.csv(
-    PATH_CSV_FILE,
-    sep=";",
-    header=False,
-    inferSchema=False
-)
+df = spark.read.format("csv") \
+    .options(
+        sep=";",
+        header="false", 
+        inferSchema="false",
+        encoding="UTF-8",
+        multiline="true",
+    ) \
+    .load(PATH_CSV_FILE)
 
 df = df.withColumnsRenamed({
     "_c0": "cnpj",
@@ -27,7 +30,6 @@ df = df.withColumnsRenamed({
 })
 
 df = df.na.fill({"company_size": "00"})
-df = df.withColumn("created_at", current_timestamp())
 
 df = df \
     .withColumn("cnpj", col("cnpj").cast(StringType())) \
@@ -36,8 +38,7 @@ df = df \
     .withColumn("responsible_qualification", col("responsible_qualification").cast(StringType())) \
     .withColumn("share_capital", col("share_capital").cast(DoubleType())) \
     .withColumn("company_size", col("company_size").cast(StringType())) \
-    .withColumn("federative_entity", col("federative_entity").cast(StringType())) \
-    .withColumn("created_at", col("created_at").cast(TimestampType()))
+    .withColumn("federative_entity", col("federative_entity").cast(StringType()))
 
 hudi_options = {
     "hoodie.table.name": TABLE_NAME,
@@ -46,8 +47,6 @@ hudi_options = {
     "hoodie.clustering.plan.strategy.sort.columns": "cnpj",
     "hoodie.datasource.write.table.type": "COPY_ON_WRITE",
 }
-
-spark.sql(f"CREATE DATABASE IF NOT EXISTS {DATABASE_NAME}")
 
 df.write.format("hudi") \
     .mode("append") \
