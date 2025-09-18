@@ -5,7 +5,7 @@ TABLE_NAME = "companies"
 DATABASE_NAME = "gold"
 SCHEMA_NAME = "br_companies"
 
-spark = SparkSession.builder.appName(f"{TABLE_NAME}_{DATABASE_NAME}").getOrCreate()
+spark = SparkSession.builder.appName(f"{DATABASE_NAME}_{TABLE_NAME}").getOrCreate()
 
 main_table = f"silver.{SCHEMA_NAME}__{TABLE_NAME}"
 legal_nature_table = f"silver.{SCHEMA_NAME}__legal_nature"
