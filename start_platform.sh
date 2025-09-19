@@ -14,8 +14,9 @@ if ! docker compose version &>/dev/null; then
 fi
 echo "Docker and Docker Compose found successfully."
 
-DOCKERFILE_PATH="${SCRIPT_DIR}/hadoop_platform/docker/base.Dockerfile"
+DOCKERFILE_PATH="${SCRIPT_DIR}/hadoop_platform/docker/Dockerfile"
 COMPOSE_PATH="${SCRIPT_DIR}/hadoop_platform/compose/docker-compose.yaml"
+SCRIPT_PATH="${SCRIPT_DIR}/hadoop_platform/scripts"
 
 if [ ! -f "$DOCKERFILE_PATH" ]; then
   echo "Error: Dockerfile not found at $DOCKERFILE_PATH"
@@ -30,8 +31,10 @@ fi
 export HADOOP_PLATFORM_UID=$(id -u)
 export HADOOP_PLATFORM_GID=$(id -g)
 
+mkdir -p $SCRIPT_PATH
+
 echo "Building the Hadoop base image..."
-docker build -f "$DOCKERFILE_PATH" -t "hadoop_platform" "$SCRIPT_DIR"
+docker build -f "$DOCKERFILE_PATH" -t "spark_hudi" "$SCRIPT_DIR"
 
 echo "Starting services with Docker Compose..."
-docker compose -f "$COMPOSE_PATH" up --build
+docker compose -f "$COMPOSE_PATH" up -d

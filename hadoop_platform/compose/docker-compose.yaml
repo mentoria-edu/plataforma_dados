@@ -4,7 +4,7 @@ x-common-env: &common-env
   HADOOP_PLATFORM_GID: ${HADOOP_PLATFORM_GID} 
 services:
   postgres:
-    image: postgres:17.4
+    image: postgres:13.22
     environment:
       - POSTGRES_PASSWORD=1234
     container_name: postgres       
@@ -21,10 +21,16 @@ services:
         ipv4_address: 172.20.0.2
    
   master_node:
-    image: hadoop_platform
+    image: spark_hudi
     environment:
       <<: *common-env
-    entrypoint: ["bash", "-c", "bash /opt/nodes_files/master_entrypoint.sh"]    
+    entrypoint: [
+      "bash", "-c",
+      "bash /opt/nodes_files/start_hdfs.sh &&
+       bash /opt/nodes_files/start_hive.sh &&
+       bash /opt/nodes_files/start_yarn.sh &&
+       tail -f /dev/null"
+    ]
     volumes:
       - namenode_hadoop_platform:/opt/hadoop/dfs/name
     container_name: masternode
@@ -32,16 +38,16 @@ services:
     ports:
       - "8020:8020"
       - "8030:8030"
-      - "8031:8031"    
+      - "8031:8031"
       - "8032:8032"
       - "8033:8033"
       - "8088:8088"
       - "9000:9000"
       - "9083:9083"
-      - "9866:9866"      
+      - "9866:9866"
       - "9868:9868"
       - "9870:9870"
-      - "10000:10000"  
+      - "10000:10000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,17 +56,17 @@ services:
       interval: 10s
       timeout: 10s
       retries: 5
-      start_period: 60s   
+      start_period: 300s   
     networks:
       hadoop_network:
         ipv4_address: 172.20.0.3
 
   worker_node:
-    image: hadoop_platform
+    image: spark_hudi
     entrypoint: ["bash", "-c", "bash /opt/nodes_files/worker_entrypoint.sh"] 
     environment:
       <<: *common-env   
-    container_name: worker_node      
+    container_name: workernode
     ports:
       - "9864:9864"
       - "8042:8042"
@@ -81,24 +87,26 @@ services:
         ipv4_address: 172.20.0.4
 
   client_node:
-    image: hadoop_platform     
-    entrypoint: ["bash", "-c", "bash /opt/spark/bin/spark-submit /opt/spark/conf/test_hive.py"] 
-    container_name: client_node
+    image: spark_hudi
+    entrypoint: ["bash", "-c", "tail -f /dev/null"]
+    container_name: clientnode
     ports:
       - "9090:9090"
       - "9091:9091"
+    volumes:
+      - ../scripts:/opt/scripts
     depends_on:
       master_node:
         condition: service_healthy
       worker_node:
-        condition: service_healthy  
+        condition: service_healthy
     networks:
       hadoop_network:
         ipv4_address: 172.20.0.5
 
 networks:
   hadoop_network:
-    name: hadoop_network
+    name: spark-hudi-network
     driver: bridge
     ipam:
       config:
@@ -107,3 +115,4 @@ networks:
 volumes:
   namenode_hadoop_platform:
   datanode_hadoop_platform:
+  
