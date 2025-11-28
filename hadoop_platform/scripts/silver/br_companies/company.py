@@ -36,7 +36,6 @@ def prepare_bronze_data(spark: SparkSession, table: str) -> DataFrame:
     """
     df = spark.table(table)
 
-
     df = df.select(
         col("cnpj"),
         col("company_name"),
@@ -58,7 +57,6 @@ def prepare_bronze_data(spark: SparkSession, table: str) -> DataFrame:
 
     df = df.withColumn("share_capital", col("share_capital").cast(DoubleType()))
     df = df.withColumn("_batch_timestamp", col("_batch_timestamp").cast("timestamp"))
-
     df = df.withColumn("company_size", coalesce(col("company_size"), lit("00")))
 
     business_cols = [c for c in df.columns if not c.startswith("_")]
@@ -70,7 +68,6 @@ def prepare_bronze_data(spark: SparkSession, table: str) -> DataFrame:
 
     df = df.withColumn("_is_current", lit(True))
     return df
-
 
 def get_data_to_update(
     spark: SparkSession,
@@ -88,48 +85,51 @@ def get_data_to_update(
         DataFrame: Union of expired old records and new versions for upsert.
     """
     target_df = spark.table(path_target_table)
+    target_alias = target_df.alias("target")
+    source_alias = source_df.alias("source")
 
     join_cond = [
-        target_df._is_current == True,
-        target_df.cnpj == source_df.cnpj
+        col("target._is_current") == True,
+        col("target.cnpj") == col("source.cnpj")
     ]
 
-    changed_target = target_df.join(source_df, join_cond, "inner")
-    changed_target = changed_target.filter(target_df._attribute_change_hash != source_df._attribute_change_hash)
+    changed_target = target_alias.join(source_alias, join_cond, "inner")
+    changed_target = changed_target.filter(
+        col("target._attribute_change_hash") != col("source._attribute_change_hash")
+    )
 
     changed_target = changed_target.select(
-            target_df.cnpj,
-            target_df.company_name,
-            target_df.legal_nature,
-            target_df.responsible_qualification,
-            target_df.share_capital,
-            target_df.company_size,
-            target_df.federative_entity,
-            target_df._batch_timestamp,
-            target_df._partition_month,
-            target_df._attribute_change_hash,
-        )
+        col("target.cnpj"),
+        col("target.company_name"),
+        col("target.legal_nature"),
+        col("target.responsible_qualification"),
+        col("target.share_capital"),
+        col("target.company_size"),
+        col("target.federative_entity"),
+        col("target._batch_timestamp"),
+        col("target._partition_month"),
+        col("target._attribute_change_hash"),
+    )
 
     changed_target = changed_target.withColumn("_is_current", lit(False))
 
     data_update_df = changed_target.unionByName(
         source_df.select(
-            "cnpj",
-            "company_name",
-            "legal_nature",
-            "responsible_qualification",
-            "share_capital",
-            "company_size",
-            "federative_entity",
-            "_batch_timestamp",
-            "_partition_month",
-            "_attribute_change_hash",
-            "_is_current"
+            col("cnpj"),
+            col("company_name"),
+            col("legal_nature"),
+            col("responsible_qualification"),
+            col("share_capital"),
+            col("company_size"),
+            col("federative_entity"),
+            col("_batch_timestamp"),
+            col("_partition_month"),
+            col("_attribute_change_hash"),
+            col("_is_current"),
         )
     )
 
     return data_update_df
-
 
 def main() -> None:
     """Execute cleaning and SCD2 upsert logic into a Hudi silver table.
@@ -154,10 +154,17 @@ def main() -> None:
         )
 
         df_merged_data = df_source_cleaned.unionByName(df_data_to_update)
-        df_merged_data.write.format("hudi").mode("append").options(**HUDI_CONFIGS).insertInto(TARGET_TABLE)
+        df_merged_data.write.format("hudi")\
+            .mode("append")\
+            .options(**HUDI_CONFIGS)\
+            .insertInto(TARGET_TABLE)
         return
 
-    df_source_cleaned.write.format("hudi").mode("insert").options(**HUDI_CONFIGS).saveAsTable(TARGET_TABLE)
+    df_source_cleaned.write.format("hudi")\
+        .mode("overwrite")\
+        .options(**HUDI_CONFIGS)\
+        .option("hoodie.datasource.write.operation", "bulk_insert")\
+        .saveAsTable(TARGET_TABLE)
 
 if __name__ == "__main__":
     main()

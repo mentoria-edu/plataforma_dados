@@ -68,20 +68,22 @@ def get_changes_legal_nature(
         DataFrame: Records with expired versions plus new versions.
     """
     target_df = spark.table(path_target_table)
+    target = target_df.alias("target")
+    source = source_df.alias("source")
 
     join_cond = [
-        target_df.id_legal_nature == source_df.id_legal_nature,
-        target_df._is_current == True
+        col("target.id_legal_nature") == col("source.id_legal_nature"),
+        col("target._is_current") == lit(True)
     ]
 
-    expired_records = target_df.join(source_df, join_cond, "inner")
-    expired_records = expired_records.filter(target_df.description != source_df.description)
+    expired_records = target.join(source, join_cond, "inner")
+    expired_records = expired_records.filter(col("target.description") != col("source.description"))
 
     expired_records = expired_records.select(
-        target_df.id_legal_nature,
-        target_df.description,
-        target_df._batch_timestamp,
-        target_df._partition_month,
+        col("target.id_legal_nature"),
+        col("target.description"),
+        col("target._batch_timestamp"),
+        col("target._partition_month"),
     )
 
     expired_records = expired_records.withColumn("_is_current", lit(False))
@@ -125,9 +127,11 @@ def main() -> None:
         return
 
     df_source_cleaned.write.format("hudi") \
-        .mode("insert") \
+        .mode("overwrite") \
         .options(**HUDI_CONFIGS) \
+        .option("hoodie.datasource.write.operation", "bulk_insert") \
         .saveAsTable(SILVER_TABLE)
+
 
 if __name__ == "__main__":
     main()
