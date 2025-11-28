@@ -61,7 +61,9 @@ def main() -> None:
         "description"
     ]
 
+
     schema = build_string_schema(table_columns)
+
 
     df = (
         spark.read 
@@ -72,7 +74,9 @@ def main() -> None:
             .csv(PATH_CSV_FILE)
     )
 
+
     df = add_meta_columns(df)
+    
 
     df.write.format("hudi").mode("overwrite").options(**HUDI_CONFIGS ).saveAsTable(f"{DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}")
 
