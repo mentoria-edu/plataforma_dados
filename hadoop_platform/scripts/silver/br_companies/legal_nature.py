@@ -23,7 +23,7 @@ HUDI_CONFIGS = {
 }
 
 
-def clean_bronze_legal_nature(spark: SparkSession, table: str) -> DataFrame:
+def prepare_bronze_legal_nature(spark: SparkSession, table: str) -> DataFrame:
     """Clean and normalize input data from the bronze layer.
 
     Args:
@@ -33,14 +33,19 @@ def clean_bronze_legal_nature(spark: SparkSession, table: str) -> DataFrame:
     Returns:
         DataFrame: Data cleaned, normalized and ready for SCD2 processing.
     """
-    df = spark.table(table).filter(col("_batch_timestamp").isNotNull())
+    df = spark.table(table)
 
     df = df.select(
-        trim(col("id_legal_nature")).alias("id_legal_nature"),
-        trim(col("description")).alias("description"),
-        col("_batch_timestamp").cast(TimestampType()),
-        col("_partition_month"),
+        col("id_legal_nature"),
+        col("description"),
+        col("_batch_timestamp"),
+        col("_partition_month")
     )
+
+    df = df.withColumn("id_legal_nature", trim(col("id_legal_nature")))
+    df = df.withColumn("description", trim(col("description")))
+
+    df = df.withColumn("_batch_timestamp", col("_batch_timestamp").cast(TimestampType()))
 
     df = df.withColumn("_is_current", lit(True))
 
@@ -66,20 +71,20 @@ def get_changes_legal_nature(
 
     join_cond = [
         target_df.id_legal_nature == source_df.id_legal_nature,
-        target_df.description != source_df.description,
         target_df._is_current == True
     ]
 
-    expired_records = (
-        target_df.join(source_df, join_cond)
-        .select(
-            target_df.id_legal_nature,
-            target_df.description,
-            target_df._batch_timestamp,
-            target_df._partition_month,
-        )
-        .withColumn("_is_current", lit(False))
+    expired_records = target_df.join(source_df, join_cond, "inner")
+    expired_records = expired_records.filter(target_df.description != source_df.description)
+
+    expired_records = expired_records.select(
+        target_df.id_legal_nature,
+        target_df.description,
+        target_df._batch_timestamp,
+        target_df._partition_month,
     )
+
+    expired_records = expired_records.withColumn("_is_current", lit(False))
 
     new_versions = source_df.select(
         "id_legal_nature",
@@ -98,11 +103,10 @@ def main() -> None:
         SparkSession.builder
         .appName("silver_legal_nature_scd2")
         .enableHiveSupport()
-        .config("spark.sql.catalogImplementation", "hive")
         .getOrCreate()
     )
 
-    df_source_cleaned = clean_bronze_legal_nature(spark, BRONZE_TABLE)
+    df_source_cleaned = prepare_bronze_legal_nature(spark, BRONZE_TABLE)
 
     if spark.catalog.tableExists(SILVER_TABLE):
         df_changes = get_changes_legal_nature(
@@ -121,10 +125,9 @@ def main() -> None:
         return
 
     df_source_cleaned.write.format("hudi") \
-        .mode("overwrite") \
+        .mode("insert") \
         .options(**HUDI_CONFIGS) \
         .saveAsTable(SILVER_TABLE)
-
 
 if __name__ == "__main__":
     main()

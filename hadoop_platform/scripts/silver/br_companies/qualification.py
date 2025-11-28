@@ -33,14 +33,19 @@ def clean_bronze_qualification(spark: SparkSession, table: str) -> DataFrame:
     Returns:
         DataFrame: Data cleaned, normalized and ready for SCD2 processing.
     """
-    df = spark.table(table).filter(col("_batch_timestamp").isNotNull())
+    df = spark.table(table)
 
     df = df.select(
-        trim(col("id_qualification")).alias("id_qualification"),
-        trim(col("description")).alias("description"),
-        col("_batch_timestamp").cast(TimestampType()),
-        col("_partition_month"),
+        col("id_qualification"),
+        col("description"),
+        col("_batch_timestamp"),
+        col("_partition_month")
     )
+
+    df = df.withColumn("id_qualification", trim(col("id_qualification")))
+    df = df.withColumn("description", trim(col("description")))
+
+    df = df.withColumn("_batch_timestamp", col("_batch_timestamp").cast(TimestampType()))
 
     df = df.withColumn("_is_current", lit(True))
 
@@ -66,20 +71,20 @@ def get_changes_qualification(
 
     join_cond = [
         target_df.id_qualification == source_df.id_qualification,
-        target_df.description != source_df.description,
         target_df._is_current == True
     ]
 
-    expired_records = (
-        target_df.join(source_df, join_cond)
-        .select(
-            target_df.id_qualification,
-            target_df.description,
-            target_df._batch_timestamp,
-            target_df._partition_month,
-        )
-        .withColumn("_is_current", lit(False))
+    expired_records = target_df.join(source_df, join_cond, "inner")
+    expired_records = expired_records.filter(target_df.description != source_df.description)
+
+    expired_records = expired_records.select(
+        target_df.id_qualification,
+        target_df.description,
+        target_df._batch_timestamp,
+        target_df._partition_month,
     )
+
+    expired_records = expired_records.withColumn("_is_current", lit(False))
 
     new_versions = source_df.select(
         "id_qualification",
@@ -121,10 +126,9 @@ def main() -> None:
         return
 
     df_source_cleaned.write.format("hudi") \
-        .mode("overwrite") \
+        .mode("insert") \
         .options(**HUDI_CONFIGS) \
         .saveAsTable(SILVER_TABLE)
-
 
 if __name__ == "__main__":
     main()
