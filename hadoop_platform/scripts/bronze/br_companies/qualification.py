@@ -16,6 +16,7 @@ HUDI_CONFIGS = {
     "hoodie.datasource.write.partitionpath.field": "_partition_month"
 }
 
+
 def build_string_schema(col_names: list[str]) -> StructType:
     """
     Create a StructType schema where all fields are StringType.
@@ -29,6 +30,7 @@ def build_string_schema(col_names: list[str]) -> StructType:
     return StructType([
         StructField(col_name, StringType(), True) for col_name in col_names
     ])
+
 
 def add_meta_columns(df: DataFrame) -> DataFrame:
     """
@@ -49,6 +51,7 @@ def add_meta_columns(df: DataFrame) -> DataFrame:
           .withColumn("_batch_timestamp", date_format(current_timestamp(), "yyyy-MM-dd HH:mm:ss"))
     )
 
+
 def main() -> None:
 
     spark = SparkSession.builder.appName(f"{DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}").getOrCreate()
@@ -58,20 +61,24 @@ def main() -> None:
         "description"
     ]
 
+
     schema = build_string_schema(table_columns)
+
 
     df = (
         spark.read 
-            .option("header", False) 
-            .schema(schema) 
-            .option("sep", ";") 
+            .option("header", False)
+            .schema(schema)
+            .option("sep", ";")
             .option("encoding", "UTF-8")
             .csv(PATH_CSV_FILE)
     )
 
-    df = add_meta_columns(df)   
 
-    df.write.format("hudi").mode("overwrite").options(**HUDI_CONFIGS ).saveAsTable(f"{DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}")
+    df = add_meta_columns(df)
+    
+
+    df.write.format("hudi").mode("overwrite").options(**HUDI_CONFIGS).saveAsTable(f"{DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}")
 
 if __name__ == "__main__":
     main()

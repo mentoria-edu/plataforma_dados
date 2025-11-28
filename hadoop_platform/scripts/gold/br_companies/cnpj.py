@@ -17,6 +17,7 @@ HUDI_CONFIGS = {
     "hoodie.datasource.write.partitionpath.field": "_partition_month"  
 }
 
+
 def get_company_size_description(col_name: str) -> Column:
     """
     Map a company_size code column to a human-readable description.
@@ -34,6 +35,7 @@ def get_company_size_description(col_name: str) -> Column:
         .when(col(col_name) == "05", "OTHERS")
         .otherwise(None)
     )
+
 
 def main() -> None:
 
@@ -66,10 +68,10 @@ def main() -> None:
                 "left"
             )
     )
+    
 
-    company_size_description = (
-        get_company_size_description("company.company_size").alias("size_description")
-    )
+    company_size_description = get_company_size_description("company.company_size").alias("size_description")
+
 
     result_df = (
         df_joined.select(

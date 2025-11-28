@@ -16,6 +16,7 @@ HUDI_CONFIGS  = {
     "hoodie.clustering.plan.strategy.sort.columns": "id_legal_nature"
 }
 
+
 def build_string_schema(col_names: list[str]) -> StructType:
     """
     Create a StructType schema where all fields are StringType.
@@ -29,6 +30,7 @@ def build_string_schema(col_names: list[str]) -> StructType:
     return StructType([
         StructField(col_name, StringType(), True) for col_name in col_names
     ])
+
 
 def add_meta_columns(df: DataFrame) -> DataFrame:
     """
@@ -48,6 +50,7 @@ def add_meta_columns(df: DataFrame) -> DataFrame:
         df.withColumn("_partition_month", date_format(current_timestamp(), "yyyy-MM"))
           .withColumn("_batch_timestamp", date_format(current_timestamp(), "yyyy-MM-dd HH:mm:ss"))
     )
+
 
 def main() -> None:
 
