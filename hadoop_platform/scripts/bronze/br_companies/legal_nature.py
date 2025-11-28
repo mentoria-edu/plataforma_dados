@@ -1,4 +1,4 @@
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import date_format, current_timestamp
 from pyspark.sql.types import StringType, StructType, StructField
 
@@ -7,25 +7,7 @@ DATABASE_NAME = "bronze"
 SCHEMA_NAME = "br_companies"
 TABLE_NAME = "legal_nature"
 
-spark = SparkSession.builder.appName(f"{DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}").getOrCreate()
-
-schema = StructType([
-    StructField("id_legal_nature", StringType(), False),
-    StructField("description", StringType(), False)
-])
-
-df = spark.read \
-    .option("header", False) \
-    .schema(schema) \
-    .option("sep", ";") \
-    .option("encoding", "UTF-8") \
-    .csv(PATH_CSV_FILE)
-
-df = df \
-    .withColumn("_partition_month", date_format(current_timestamp(), "yyyy-MM")) \
-    .withColumn("_batch_timestamp", date_format(current_timestamp(), "yyyy-MM-dd HH:mm:ss"))
-
-hudi_options = {
+HUDI_CONFIGS  = {
     "hoodie.table.name": TABLE_NAME,
     "hoodie.datasource.write.recordkey.field": "id_legal_nature",
     "hoodie.datasource.write.operation": "insert",
@@ -34,11 +16,62 @@ hudi_options = {
     "hoodie.clustering.plan.strategy.sort.columns": "id_legal_nature"
 }
 
-df.write.format("hudi") \
-    .mode("overwrite") \
-    .options(**hudi_options) \
-    .saveAsTable(f"{DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}")
+def build_string_schema(col_names: list[str]) -> StructType:
+    """
+    Create a StructType schema where all fields are StringType.
 
-df = spark.table(f"{DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}")
+    Args:
+        col_names (list[str]): List of column names.
 
-df.show()
+    Returns:
+        StructType: Schema with all fields as StringType.
+    """
+    return StructType([
+        StructField(col_name, StringType(), True) for col_name in col_names
+    ])
+
+def add_meta_columns(df: DataFrame) -> DataFrame:
+    """
+    Add control metadata columns to the DataFrame.
+
+    Adds:
+        - _partition_month  (yyyy-MM)
+        - _batch_timestamp  (yyyy-MM-dd HH:mm:ss)
+
+    Args:
+        df (DataFrame): Input DataFrame.
+
+    Returns:
+        DataFrame: DataFrame with metadata fields added.
+    """
+    return (
+        df.withColumn("_partition_month", date_format(current_timestamp(), "yyyy-MM"))
+          .withColumn("_batch_timestamp", date_format(current_timestamp(), "yyyy-MM-dd HH:mm:ss"))
+    )
+
+def main() -> None:
+
+    spark = SparkSession.builder.appName(f"{DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}").getOrCreate()
+
+    table_columns = [
+        "id_legal_nature",
+        "description"
+    ]
+
+    schema = build_string_schema(table_columns)
+
+    df = (
+        spark.read 
+            .option("header", False) 
+            .schema(schema) 
+            .option("sep", ";") 
+            .option("encoding", "UTF-8")
+            .csv(PATH_CSV_FILE)
+    )
+
+    df = add_meta_columns(df)
+
+    df.write.format("hudi").mode("overwrite").options(**HUDI_CONFIGS ).saveAsTable(f"{DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}")
+
+if __name__ == "__main__":
+    main()
