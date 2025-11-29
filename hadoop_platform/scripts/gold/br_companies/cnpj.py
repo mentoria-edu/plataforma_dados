@@ -106,6 +106,7 @@ def main() -> None:
     )
 
     result_df.write.format("hudi").mode("overwrite").options(**HUDI_CONFIGS).saveAsTable(f"{DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}")
+    
 
 if __name__ == "__main__":
     main()
