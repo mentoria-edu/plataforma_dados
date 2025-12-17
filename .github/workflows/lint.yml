@@ -1,0 +1,24 @@
+name: Python Linting CI
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: copy repo files
+        uses: actions/checkout@v4
+
+      - name: install python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14.2'
+
+      - name: install linters
+        run: pip install flake8 isort
+
+      - name: run isort
+        run: isort **/*.py --check-only --diff
+
+      - name: run flake8
+        run: flake8 **/*.py --max-line-length=79
