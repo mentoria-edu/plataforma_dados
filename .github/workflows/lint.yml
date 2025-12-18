@@ -18,7 +18,7 @@ jobs:
         run: pip install flake8 isort
 
       - name: run isort
-        run: isort **/*.py --check-only --diff
+        run: isort --check-only --diff .
 
       - name: run flake8
-        run: flake8 **/*.py --max-line-length=79
+        run: flake8 --max-line-length=79 .
