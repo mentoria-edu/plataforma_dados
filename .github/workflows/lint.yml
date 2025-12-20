@@ -2,9 +2,9 @@ name: Lint e Format
 
 on:
   push:
-    branches: [ master, test_action ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ master, test_action ]
+    branches: [ main, dev ]
 
 jobs:
   ruff:
