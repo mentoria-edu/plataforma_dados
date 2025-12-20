@@ -1,0 +1,29 @@
+name: Lint e Format
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+      
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      
+      - name: Instalar Ruff
+        run: pip install ruff
+      
+      - name: Lint - Verificar problemas
+        run: ruff check
+      
+      - name: Format - Verificar formatação
+        run: ruff format --check
