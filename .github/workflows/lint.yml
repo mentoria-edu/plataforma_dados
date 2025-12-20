@@ -1,24 +1,29 @@
-name: Python Linting CI
-on: [push, pull_request]
+name: Lint e Format
+
+on:
+  push:
+    branches: [ master, test_action ]
+  pull_request:
+    branches: [ master, test_action ]
 
 jobs:
-  lint:
-    runs-on: ubuntu-22.04
-
+  ruff:
+    runs-on: ubuntu-latest
+    
     steps:
-      - name: copy repo files
+      - name: Checkout do código
         uses: actions/checkout@v4
-
-      - name: install python
-        uses: actions/setup-python@v6
+      
+      - name: Configurar Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.14.2'
-
-      - name: install linters
-        run: pip install flake8 isort
-
-      - name: run isort
-        run: isort --check-only --diff .
-
-      - name: run flake8
-        run: flake8 --max-line-length=79 .
+          python-version: '3.13'
+      
+      - name: Instalar Ruff
+        run: pip install ruff
+      
+      - name: Lint - Verificar problemas
+        run: ruff check
+      
+      - name: Format - Verificar formatação
+        run: ruff format --check
