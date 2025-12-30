@@ -11,7 +11,9 @@ HUDI_OPTIONS = {
     "hoodie.datasource.write.keygenerator.class": (
        "org.apache.hudi.keygen.ComplexKeyGenerator"
     ),
-    "hoodie.datasource.write.recordkey.field": "id_legal_nature,_attribute_change_hash",    
+    "hoodie.datasource.write.recordkey.field": (
+        "id_legal_nature,_attribute_change_hash"
+    ),
     "hoodie.datasource.write.partitionpath.field": "_partition_month",
     "hoodie.datasource.write.operation": "insert",
     "hoodie.datasource.write.table.type": "COPY_ON_WRITE",
@@ -42,7 +44,7 @@ def write_hudi_table(spark: SparkSession, df: DataFrame) -> None:
         .options(**HUDI_OPTIONS)\
         .option("hoodie.datasource.write.operation", "bulk_insert")\
         .saveAsTable(GOLD_TABLE_NAME)
-    
+
 
 def main() -> None:
 
@@ -53,7 +55,7 @@ def main() -> None:
     source_df = spark.table(
         f"{SOURCE_DATABASE}.{SCHEMA_NAME}__{TABLE_NAME}"
     )
-        
+
     df = source_df
 
 

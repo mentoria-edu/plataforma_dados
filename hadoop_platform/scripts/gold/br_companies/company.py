@@ -1,9 +1,6 @@
-from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import (
-    col,
-    when
-)
+from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.column import Column
+from pyspark.sql.functions import col, when
 
 DATABASE_NAME = "gold"
 SCHEMA_NAME = "br_companies"
@@ -16,7 +13,9 @@ HUDI_OPTIONS = {
     "hoodie.datasource.write.keygenerator.class": (
        "org.apache.hudi.keygen.ComplexKeyGenerator"
     ),
-    "hoodie.datasource.write.recordkey.field": "cnpj,_attribute_change_hash",    
+    "hoodie.datasource.write.recordkey.field": (
+    "cnpj,_attribute_change_hash"
+    ),
     "hoodie.datasource.write.partitionpath.field": "_partition_month",
     "hoodie.datasource.write.operation": "insert",
     "hoodie.datasource.write.table.type": "COPY_ON_WRITE",
@@ -29,7 +28,8 @@ HUDI_OPTIONS = {
 
 def get_company_size_description(column: Column) -> Column:
     """
-    Maps a company size code column to a human-readable company size description.
+    Maps a company size code column to a human-readable
+    company size description.
 
     Args:
         column (Column): Spark Column containing the company size code.
@@ -65,9 +65,9 @@ def write_hudi_table(spark: SparkSession, df: DataFrame) -> None:
         .mode("overwrite")\
         .options(**HUDI_OPTIONS)\
         .option("hoodie.datasource.write.operation", "bulk_insert")\
-        .saveAsTable(GOLD_TABLE_NAME)    
+        .saveAsTable(GOLD_TABLE_NAME)
 
-  
+
 def main() -> None:
 
     spark = SparkSession.builder.appName(
@@ -103,7 +103,7 @@ def main() -> None:
         "_partition_month"
     )
 
-        
+
     write_hudi_table(spark, df)
 
 
