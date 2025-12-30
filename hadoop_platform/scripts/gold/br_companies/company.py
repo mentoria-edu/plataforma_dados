@@ -1,7 +1,6 @@
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col, when
-    
 
 DATABASE_NAME = "gold"
 SCHEMA_NAME = "br_companies"
