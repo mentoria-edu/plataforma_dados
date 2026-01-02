@@ -1,4 +1,4 @@
-from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import DataFrame, SparkSession, XAjustForFixLint
 
 DATABASE_NAME = "gold"
 SCHEMA_NAME = "br_companies"
