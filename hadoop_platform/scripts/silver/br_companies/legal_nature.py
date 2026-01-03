@@ -41,7 +41,7 @@ def prepare_bronze_legal_nature(spark: SparkSession, table: str) -> DataFrame:
         col("id_legal_nature"),
         col("description"),
         col("_batch_timestamp"),
-        col("_partition_month")
+        col("_partition_month"),
     )
 
     df = df.withColumn("id_legal_nature", trim(col("id_legal_nature")))
@@ -57,9 +57,7 @@ def prepare_bronze_legal_nature(spark: SparkSession, table: str) -> DataFrame:
 
 
 def get_changes_legal_nature(
-    spark: SparkSession,
-    path_target_table: str,
-    source_df: DataFrame
+    spark: SparkSession, path_target_table: str, source_df: DataFrame
 ) -> DataFrame:
     """Identify expired rows and new rows for a SCD2 upsert.
 
@@ -77,7 +75,7 @@ def get_changes_legal_nature(
 
     join_cond = [
         col("target.id_legal_nature") == col("source.id_legal_nature"),
-        col("target._is_current") == lit(True)
+        col("target._is_current") == lit(True),
     ]
 
     expired_records = target.join(source, join_cond, "inner")
@@ -99,7 +97,7 @@ def get_changes_legal_nature(
         "description",
         "_batch_timestamp",
         "_partition_month",
-        "_is_current"
+        "_is_current",
     )
 
     return expired_records.unionByName(new_versions)
@@ -108,8 +106,7 @@ def get_changes_legal_nature(
 def main() -> None:
     """Process SCD2 logic and write results to a Hudi silver table."""
     spark = (
-        SparkSession.builder
-        .appName("silver_legal_nature_scd2")
+        SparkSession.builder.appName("silver_legal_nature_scd2")
         .enableHiveSupport()
         .getOrCreate()
     )
@@ -118,25 +115,22 @@ def main() -> None:
 
     if spark.catalog.tableExists(SILVER_TABLE):
         df_changes = get_changes_legal_nature(
-            spark,
-            SILVER_TABLE,
-            df_source_cleaned
+            spark, SILVER_TABLE, df_source_cleaned
         )
 
         df_final = df_source_cleaned.unionByName(df_changes)
 
-        df_final.write.format("hudi") \
-            .mode("append") \
-            .options(**HUDI_CONFIGS) \
-            .insertInto(SILVER_TABLE)
+        df_final.write.format("hudi").mode("append").options(
+            **HUDI_CONFIGS
+        ).insertInto(SILVER_TABLE)
 
         return
 
-    df_source_cleaned.write.format("hudi") \
-        .mode("overwrite") \
-        .options(**HUDI_CONFIGS) \
-        .option("hoodie.datasource.write.operation", "bulk_insert") \
-        .saveAsTable(SILVER_TABLE)
+    df_source_cleaned.write.format("hudi").mode("overwrite").options(
+        **HUDI_CONFIGS
+    ).option("hoodie.datasource.write.operation", "bulk_insert").saveAsTable(
+        SILVER_TABLE
+    )
 
 
 if __name__ == "__main__":

@@ -23,7 +23,7 @@ HUDI_CONFIGS = {
     "hoodie.table.precombine.field": "_batch_timestamp",
     "hoodie.datasource.hive_sync.enable": "false",
     "hoodie.spark.sql.merge.into.partial.updates": "false",
-    "hoodie.cleaner.policy.failed.writes": "LAZY"
+    "hoodie.cleaner.policy.failed.writes": "LAZY",
 }
 
 
@@ -49,15 +49,14 @@ def prepare_bronze_data(spark: SparkSession, table: str) -> DataFrame:
         col("company_size"),
         col("federative_entity"),
         col("_batch_timestamp"),
-        col("_partition_month")
+        col("_partition_month"),
     )
 
     df = df.withColumn("cnpj", trim(col("cnpj")))
     df = df.withColumn("company_name", trim(col("company_name")))
     df = df.withColumn("legal_nature", trim(col("legal_nature")))
     df = df.withColumn(
-        "responsible_qualification",
-        trim(col("responsible_qualification"))
+        "responsible_qualification", trim(col("responsible_qualification"))
     )
     df = df.withColumn("company_size", trim(col("company_size")))
     df = df.withColumn("federative_entity", trim(col("federative_entity")))
@@ -75,8 +74,7 @@ def prepare_bronze_data(spark: SparkSession, table: str) -> DataFrame:
     business_cols = [c for c in df.columns if not c.startswith("_")]
 
     df = df.withColumn(
-        "_attribute_change_hash",
-        xxhash64(*[col(c) for c in business_cols])
+        "_attribute_change_hash", xxhash64(*[col(c) for c in business_cols])
     )
 
     df = df.withColumn("_is_current", lit(True))
@@ -84,9 +82,7 @@ def prepare_bronze_data(spark: SparkSession, table: str) -> DataFrame:
 
 
 def get_data_to_update(
-    spark: SparkSession,
-    path_target_table: str,
-    source_df: DataFrame
+    spark: SparkSession, path_target_table: str, source_df: DataFrame
 ) -> DataFrame:
     """Identify updated rows for SCD2 processing.
 
@@ -104,13 +100,13 @@ def get_data_to_update(
 
     join_cond = [
         col("target._is_current"),
-        col("target.cnpj") == col("source.cnpj")
+        col("target.cnpj") == col("source.cnpj"),
     ]
 
     changed_target = target_alias.join(source_alias, join_cond, "inner")
     changed_target = changed_target.filter(
-        col("target._attribute_change_hash") !=
-        col("source._attribute_change_hash")
+        col("target._attribute_change_hash")
+        != col("source._attribute_change_hash")
     )
 
     changed_target = changed_target.select(
@@ -154,8 +150,7 @@ def main() -> None:
         None
     """
     spark = (
-        SparkSession.builder
-        .appName("silver_pyspark")
+        SparkSession.builder.appName("silver_pyspark")
         .enableHiveSupport()
         .getOrCreate()
     )
@@ -164,23 +159,20 @@ def main() -> None:
 
     if spark.catalog.tableExists(TARGET_TABLE):
         df_data_to_update = get_data_to_update(
-            spark,
-            TARGET_TABLE,
-            df_source_cleaned
+            spark, TARGET_TABLE, df_source_cleaned
         )
 
         df_merged_data = df_source_cleaned.unionByName(df_data_to_update)
-        df_merged_data.write.format("hudi")\
-            .mode("append")\
-            .options(**HUDI_CONFIGS)\
-            .insertInto(TARGET_TABLE)
+        df_merged_data.write.format("hudi").mode("append").options(
+            **HUDI_CONFIGS
+        ).insertInto(TARGET_TABLE)
         return
 
-    df_source_cleaned.write.format("hudi")\
-        .mode("overwrite")\
-        .options(**HUDI_CONFIGS)\
-        .option("hoodie.datasource.write.operation", "bulk_insert")\
-        .saveAsTable(TARGET_TABLE)
+    df_source_cleaned.write.format("hudi").mode("overwrite").options(
+        **HUDI_CONFIGS
+    ).option("hoodie.datasource.write.operation", "bulk_insert").saveAsTable(
+        TARGET_TABLE
+    )
 
 
 if __name__ == "__main__":
