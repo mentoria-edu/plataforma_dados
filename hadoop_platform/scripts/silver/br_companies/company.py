@@ -1,5 +1,5 @@
-from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col, trim, concat_ws, coalesce, lit, xxhash64
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import coalesce, col, lit, trim, xxhash64
 from pyspark.sql.types import DoubleType
 
 TARGET_DATABASE_NAME = "silver"
@@ -12,7 +12,9 @@ BATCH_TABLE = f"{SOURCE_DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}"
 
 HUDI_CONFIGS = {
     "hoodie.table.name": TABLE_NAME,
-    "hoodie.datasource.write.keygenerator.class": "org.apache.hudi.keygen.ComplexKeyGenerator",
+    "hoodie.datasource.write.keygenerator.class": (
+        "org.apache.hudi.keygen.ComplexKeyGenerator"
+    ),
     "hoodie.datasource.write.recordkey.field": "cnpj,_attribute_change_hash",
     "hoodie.datasource.write.partitionpath.field": "_partition_month",
     "hoodie.datasource.write.operation": "upsert",
@@ -24,6 +26,7 @@ HUDI_CONFIGS = {
     "hoodie.cleaner.policy.failed.writes": "LAZY"
 }
 
+
 def prepare_bronze_data(spark: SparkSession, table: str) -> DataFrame:
     """Clean data from the bronze layer.
 
@@ -32,7 +35,8 @@ def prepare_bronze_data(spark: SparkSession, table: str) -> DataFrame:
         table (str): Full table path in the bronze layer.
 
     Returns:
-        DataFrame: Cleaned and normalized bronze data with hash and control fields.
+        DataFrame: Cleaned and normalized bronze data with hash and
+            control fields.
     """
     df = spark.table(table)
 
@@ -51,13 +55,22 @@ def prepare_bronze_data(spark: SparkSession, table: str) -> DataFrame:
     df = df.withColumn("cnpj", trim(col("cnpj")))
     df = df.withColumn("company_name", trim(col("company_name")))
     df = df.withColumn("legal_nature", trim(col("legal_nature")))
-    df = df.withColumn("responsible_qualification", trim(col("responsible_qualification")))
+    df = df.withColumn(
+        "responsible_qualification",
+        trim(col("responsible_qualification"))
+    )
     df = df.withColumn("company_size", trim(col("company_size")))
     df = df.withColumn("federative_entity", trim(col("federative_entity")))
 
-    df = df.withColumn("share_capital", col("share_capital").cast(DoubleType()))
-    df = df.withColumn("_batch_timestamp", col("_batch_timestamp").cast("timestamp"))
-    df = df.withColumn("company_size", coalesce(col("company_size"), lit("00")))
+    df = df.withColumn(
+        "share_capital", col("share_capital").cast(DoubleType())
+    )
+    df = df.withColumn(
+        "_batch_timestamp", col("_batch_timestamp").cast("timestamp")
+    )
+    df = df.withColumn(
+        "company_size", coalesce(col("company_size"), lit("00"))
+    )
 
     business_cols = [c for c in df.columns if not c.startswith("_")]
 
@@ -68,6 +81,7 @@ def prepare_bronze_data(spark: SparkSession, table: str) -> DataFrame:
 
     df = df.withColumn("_is_current", lit(True))
     return df
+
 
 def get_data_to_update(
     spark: SparkSession,
@@ -89,13 +103,14 @@ def get_data_to_update(
     source_alias = source_df.alias("source")
 
     join_cond = [
-        col("target._is_current") == True,
+        col("target._is_current"),
         col("target.cnpj") == col("source.cnpj")
     ]
 
     changed_target = target_alias.join(source_alias, join_cond, "inner")
     changed_target = changed_target.filter(
-        col("target._attribute_change_hash") != col("source._attribute_change_hash")
+        col("target._attribute_change_hash") !=
+        col("source._attribute_change_hash")
     )
 
     changed_target = changed_target.select(
@@ -131,6 +146,7 @@ def get_data_to_update(
 
     return data_update_df
 
+
 def main() -> None:
     """Execute cleaning and SCD2 upsert logic into a Hudi silver table.
 
@@ -165,6 +181,7 @@ def main() -> None:
         .options(**HUDI_CONFIGS)\
         .option("hoodie.datasource.write.operation", "bulk_insert")\
         .saveAsTable(TARGET_TABLE)
+
 
 if __name__ == "__main__":
     main()

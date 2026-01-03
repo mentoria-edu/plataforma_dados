@@ -1,5 +1,5 @@
-from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col, trim, lit
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import col, lit, trim
 from pyspark.sql.types import TimestampType
 
 TARGET_DATABASE_NAME = "silver"
@@ -12,7 +12,9 @@ BRONZE_TABLE = f"{SOURCE_DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}"
 
 HUDI_CONFIGS = {
     "hoodie.table.name": TABLE_NAME,
-    "hoodie.datasource.write.keygenerator.class": "org.apache.hudi.keygen.ComplexKeyGenerator",
+    "hoodie.datasource.write.keygenerator.class": (
+        "org.apache.hudi.keygen.ComplexKeyGenerator"
+    ),
     "hoodie.datasource.write.recordkey.field": "id_qualification,description",
     "hoodie.datasource.write.partitionpath.field": "_partition_month",
     "hoodie.datasource.write.operation": "upsert",
@@ -45,7 +47,9 @@ def clean_bronze_qualification(spark: SparkSession, table: str) -> DataFrame:
     df = df.withColumn("id_qualification", trim(col("id_qualification")))
     df = df.withColumn("description", trim(col("description")))
 
-    df = df.withColumn("_batch_timestamp", col("_batch_timestamp").cast(TimestampType()))
+    df = df.withColumn(
+        "_batch_timestamp", col("_batch_timestamp").cast(TimestampType())
+    )
 
     df = df.withColumn("_is_current", lit(True))
 
@@ -77,7 +81,9 @@ def get_changes_qualification(
     ]
 
     expired_records = target.join(source, join_cond, "inner")
-    expired_records = expired_records.filter(col("target.description") != col("source.description"))
+    expired_records = expired_records.filter(
+        col("target.description") != col("source.description")
+    )
 
     expired_records = expired_records.select(
         col("target.id_qualification"),
