@@ -1,5 +1,5 @@
-from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col, trim, lit
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import col, lit, trim
 from pyspark.sql.types import TimestampType
 
 TARGET_DATABASE_NAME = "silver"
@@ -12,7 +12,9 @@ BRONZE_TABLE = f"{SOURCE_DATABASE_NAME}.{SCHEMA_NAME}__{TABLE_NAME}"
 
 HUDI_CONFIGS = {
     "hoodie.table.name": TABLE_NAME,
-    "hoodie.datasource.write.keygenerator.class": "org.apache.hudi.keygen.ComplexKeyGenerator",
+    "hoodie.datasource.write.keygenerator.class": (
+        "org.apache.hudi.keygen.ComplexKeyGenerator"
+    ),
     "hoodie.datasource.write.recordkey.field": "id_qualification,description",
     "hoodie.datasource.write.partitionpath.field": "_partition_month",
     "hoodie.datasource.write.operation": "upsert",
@@ -39,13 +41,15 @@ def clean_bronze_qualification(spark: SparkSession, table: str) -> DataFrame:
         col("id_qualification"),
         col("description"),
         col("_batch_timestamp"),
-        col("_partition_month")
+        col("_partition_month"),
     )
 
     df = df.withColumn("id_qualification", trim(col("id_qualification")))
     df = df.withColumn("description", trim(col("description")))
 
-    df = df.withColumn("_batch_timestamp", col("_batch_timestamp").cast(TimestampType()))
+    df = df.withColumn(
+        "_batch_timestamp", col("_batch_timestamp").cast(TimestampType())
+    )
 
     df = df.withColumn("_is_current", lit(True))
 
@@ -53,9 +57,7 @@ def clean_bronze_qualification(spark: SparkSession, table: str) -> DataFrame:
 
 
 def get_changes_qualification(
-    spark: SparkSession,
-    path_target_table: str,
-    source_df: DataFrame
+    spark: SparkSession, path_target_table: str, source_df: DataFrame
 ) -> DataFrame:
     """Identify expired rows and new versions for SCD2 processing.
 
@@ -73,11 +75,13 @@ def get_changes_qualification(
 
     join_cond = [
         col("target.id_qualification") == col("source.id_qualification"),
-        col("target._is_current") == lit(True)
+        col("target._is_current") == lit(True),
     ]
 
     expired_records = target.join(source, join_cond, "inner")
-    expired_records = expired_records.filter(col("target.description") != col("source.description"))
+    expired_records = expired_records.filter(
+        col("target.description") != col("source.description")
+    )
 
     expired_records = expired_records.select(
         col("target.id_qualification"),
@@ -93,7 +97,7 @@ def get_changes_qualification(
         "description",
         "_batch_timestamp",
         "_partition_month",
-        "_is_current"
+        "_is_current",
     )
 
     return expired_records.unionByName(new_versions)
@@ -102,8 +106,7 @@ def get_changes_qualification(
 def main() -> None:
     """Apply SCD2 logic and write results into Hudi silver table."""
     spark = (
-        SparkSession.builder
-        .appName("silver_qualification_scd2")
+        SparkSession.builder.appName("silver_qualification_scd2")
         .enableHiveSupport()
         .config("spark.sql.catalogImplementation", "hive")
         .getOrCreate()
@@ -113,25 +116,22 @@ def main() -> None:
 
     if spark.catalog.tableExists(SILVER_TABLE):
         df_changes = get_changes_qualification(
-            spark,
-            SILVER_TABLE,
-            df_source_cleaned
+            spark, SILVER_TABLE, df_source_cleaned
         )
 
         df_final = df_source_cleaned.unionByName(df_changes)
 
-        df_final.write.format("hudi") \
-            .mode("append") \
-            .options(**HUDI_CONFIGS) \
-            .insertInto(SILVER_TABLE)
+        df_final.write.format("hudi").mode("append").options(
+            **HUDI_CONFIGS
+        ).insertInto(SILVER_TABLE)
 
         return
 
-    df_source_cleaned.write.format("hudi") \
-        .mode("overwrite") \
-        .options(**HUDI_CONFIGS) \
-        .option("hoodie.datasource.write.operation", "bulk_insert") \
-        .saveAsTable(SILVER_TABLE)
+    df_source_cleaned.write.format("hudi").mode("overwrite").options(
+        **HUDI_CONFIGS
+    ).option("hoodie.datasource.write.operation", "bulk_insert").saveAsTable(
+        SILVER_TABLE
+    )
 
 
 if __name__ == "__main__":
