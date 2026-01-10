@@ -2,6 +2,11 @@ from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.column import Column
 from pyspark.sql.functions import col, when
 
+COMPANY_SIZE_NOT_INFORMED = 0
+COMPANY_SIZE_MICRO = 1
+COMPANY_SIZE_SMALL = 3
+COMPANY_SIZE_OTHERS = 5
+
 DATABASE_NAME = "gold"
 SCHEMA_NAME = "br_companies"
 TABLE_NAME = "company"
@@ -38,10 +43,10 @@ def get_company_size_description(column: Column) -> Column:
         Column: Spark Column with the corresponding company size description.
     """
     return (
-        when(column == 0, "NOT INFORMED")
-        .when(column == 1, "MICRO COMPANY")
-        .when(column == 3, "SMALL COMPANY")
-        .when(column == 5, "OTHERS")
+        when(column == COMPANY_SIZE_NOT_INFORMED, "NOT INFORMED")
+        .when(column == COMPANY_SIZE_MICRO, "MICRO COMPANY")
+        .when(column == COMPANY_SIZE_SMALL, "SMALL COMPANY")
+        .when(column == COMPANY_SIZE_OTHERS, "OTHERS")
         .otherwise(None)
     )
 
